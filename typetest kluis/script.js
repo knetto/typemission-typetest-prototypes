@@ -1,4 +1,4 @@
-const TOTAL_SECONDS = 60;
+const TOTAL_SECONDS = 1;
 const INITIAL_WORDS = 14;
 const WORD_BATCH = 9;
 const BUFFER_CHARS = 50;
@@ -390,9 +390,14 @@ const morphFlash = document.querySelector("#morphFlash");
 const storyStage = document.querySelector("#storyStage");
 const missionLayout = document.querySelector("#missionLayout");
 const storyText = document.querySelector("#storyText");
-const storyProgress = document.querySelectorAll(".story-progress span");
+const storyProgress = document.querySelectorAll("#storyStage .story-progress span");
 const playBriefingButton = document.querySelector("#playBriefingButton");
 const beginMissionButton = document.querySelector("#beginMissionButton");
+const briefingVideo = document.querySelector("#briefingVideo");
+const endBriefingStage = document.querySelector("#endBriefingStage");
+const endBriefingVideo = document.querySelector("#endBriefingVideo");
+const endBriefingText = document.querySelector("#endBriefingText");
+const skipEndBriefingButton = document.querySelector("#skipEndBriefingButton");
 const startMissionHero = document.querySelector("#startMissionHero");
 const completeWpm = document.querySelector("#completeWpm");
 const completeAccuracy = document.querySelector("#completeAccuracy");
@@ -412,10 +417,22 @@ const vaultWrapper = document.querySelector(".vault-wrapper");
 let dialRotation = 0;
 
 const storySlides = [
-  "Welkom bij de Super Spy School, rekruut! Ik ben Miss J.",
-  "Iedereen denkt dat een spion alleen gadgets en lasers gebruikt, maar ons belangrijkste wapen is het toetsenbord.",
-  "Of je nu een kluis kraakt of geheime codes verstuurt: je moet supersnel kunnen typen.",
-  "Als je te traag bent, gaat het alarm af en is je missie mislukt. Doe de test, dan kijk ik hoe snel jouw vingers zijn."
+  "Hallo, ik ben miss J.",
+  "Deze video heb ik opgenomen om nieuwe leerlingen te helpen bij het slagen van hun eerste test.",
+  "Als je slaagt, willen we je maar al te graag op onze school hebben, want we zijn altijd op zoek naar goede hulp.",
+  "Als je slaagt, krijg je les van mij. Dat zou heel leuk zijn.",
+  "Om te kijken of jij de aangewezen persoon bent om ons te helpen, heeft professor Qwerty hier een test voor gemaakt.",
+  "Succes!"
+];
+
+const endStorySlides = [
+  "Geweldig, je hebt het gehaald!",
+  "Dat is best knap hoor, gefeliciteerd!",
+  "Je bent nu officieel uitgenodigd om les te krijgen op de Super Spy School.",
+  "Ik hoop je snel te zien op onze school.",
+  "Misschien kom je wel bij mij in de klas, dat zou ik heel leuk vinden.",
+  "Dan kan ik je alle letters leren en dan kan ik je leren omgaan met spionnen gadgets, zodat je op je eerste echte spionnenmissie mag gaan.",
+  "Tot ziens en eh... hopelijk tot gauw!"
 ];
 
 let running = false;
@@ -517,7 +534,7 @@ function clearAnimatedStyles(element) {
 }
 
 function setViewImmediate(nextView) {
-  [storyStage, missionLayout, resultPanel].forEach((view) => {
+  [storyStage, missionLayout, endBriefingStage, resultPanel].forEach((view) => {
     const isActive = view === nextView;
     view.hidden = !isActive;
     view.classList.toggle("active", isActive);
@@ -536,6 +553,12 @@ function transitionToView(nextView, onComplete) {
   const currentView = activeMissionView;
 
   if (currentView === nextView) {
+    if (onComplete) onComplete();
+    return;
+  }
+
+  if (prefersReducedMotion) {
+    setViewImmediate(nextView);
     if (onComplete) onComplete();
     return;
   }
@@ -587,16 +610,16 @@ function transitionToView(nextView, onComplete) {
     { transform: "translateX(0%) skewX(-14deg)", opacity: 0.6, offset: 0.5 },
     { transform: "translateX(108%) skewX(-14deg)", opacity: 0 }
   ], {
-    duration: prefersReducedMotion ? 0 : 600,
+    duration: 600,
     easing: easingCurve
   });
 
   // Current view slide up, scale down, and fade out
   const fadeOutAnim = currentView.animate([
     { opacity: 1, transform: "translateY(0) scale(1)" },
-    { opacity: 0, transform: prefersReducedMotion ? "translateY(0) scale(1)" : "translateY(-30px) scale(0.95)" }
+    { opacity: 0, transform: "translateY(-30px) scale(0.95)" }
   ], {
-    duration: prefersReducedMotion ? 150 : 450,
+    duration: 450,
     easing: easingCurve
   });
 
@@ -605,154 +628,134 @@ function transitionToView(nextView, onComplete) {
     { height: `${currentHeight}px` },
     { height: `${nextHeight}px` }
   ], {
-    duration: prefersReducedMotion ? 150 : 600,
+    duration: 600,
     easing: easingCurve
   });
 
   // Next view slide up, scale up, and fade in
   const fadeInAnim = nextView.animate([
-    { opacity: 0, transform: prefersReducedMotion ? "translateY(0) scale(1)" : "translateY(30px) scale(0.95)" },
+    { opacity: 0, transform: "translateY(30px) scale(0.95)" },
     { opacity: 1, transform: "translateY(0) scale(1)" }
   ], {
-    duration: prefersReducedMotion ? 150 : 550,
-    delay: prefersReducedMotion ? 0 : 50,
+    duration: 550,
+    delay: 50,
     easing: easingCurve,
     fill: "forwards"
   });
 
   // Stagger animations for nextView child components
-  if (!prefersReducedMotion) {
-    if (nextView === missionLayout) {
-      const leftPanel = nextView.querySelector(".briefing-panel");
-      const rightPanel = nextView.querySelector(".vault-console");
-      if (leftPanel) {
-        leftPanel.animate([
-          { opacity: 0, transform: "translateX(-40px) scale(0.96)" },
-          { opacity: 1, transform: "translateX(0) scale(1)" }
-        ], {
-          duration: 600,
-          delay: 100,
-          easing: easingCurve,
-          fill: "both"
-        });
-      }
-      if (rightPanel) {
-        rightPanel.animate([
-          { opacity: 0, transform: "translateX(40px) scale(0.96)" },
-          { opacity: 1, transform: "translateX(0) scale(1)" }
-        ], {
-          duration: 600,
-          delay: 160,
-          easing: easingCurve,
-          fill: "both"
-        });
-      }
-    } else if (nextView === resultPanel) {
-      const summary = nextView.querySelector(".result-summary");
-      const copy = nextView.querySelector(".result-copy");
-      const cta = nextView.querySelector(".cta-box");
-      const potential = nextView.querySelector(".potential-card");
+  if (nextView === missionLayout) {
+    const consolePanel = nextView.querySelector(".vault-console");
+    const gamesPanel = nextView.querySelector(".vault-games-footer");
+    if (consolePanel) {
+      consolePanel.animate([
+        { opacity: 0, transform: "translateY(30px) scale(0.98)" },
+        { opacity: 1, transform: "translateY(0) scale(1)" }
+      ], {
+        duration: 600,
+        delay: 100,
+        easing: easingCurve,
+        fill: "both"
+      });
+    }
+    if (gamesPanel) {
+      gamesPanel.animate([
+        { opacity: 0, transform: "translateY(30px) scale(0.98)" },
+        { opacity: 1, transform: "translateY(0) scale(1)" }
+      ], {
+        duration: 600,
+        delay: 200,
+        easing: easingCurve,
+        fill: "both"
+      });
+    }
+  } else if (nextView === resultPanel) {
+    const headerRow = nextView.querySelector(".result-header-row");
+    const statsRow = nextView.querySelector(".complete-stats");
+    const chartsRow = nextView.querySelector(".result-charts-row");
+    const potentialCard = nextView.querySelector(".potential-card");
+    const actionsRow = nextView.querySelector(".result-actions-row");
 
-      if (summary) {
-        summary.animate([
-          { opacity: 0, transform: "translateX(-30px) scale(0.97)" },
-          { opacity: 1, transform: "translateX(0) scale(1)" }
-        ], {
-          duration: 600,
-          delay: 100,
-          easing: easingCurve,
-          fill: "both"
-        });
-      }
-      if (copy) {
-        copy.animate([
-          { opacity: 0, transform: "translateY(30px) scale(0.97)" },
-          { opacity: 1, transform: "translateY(0) scale(1)" }
-        ], {
-          duration: 600,
-          delay: 180,
-          easing: easingCurve,
-          fill: "both"
-        });
-      }
-      if (cta) {
-        cta.animate([
-          { opacity: 0, transform: "translateX(30px) scale(0.97)" },
-          { opacity: 1, transform: "translateX(0) scale(1)" }
-        ], {
-          duration: 600,
-          delay: 260,
-          easing: easingCurve,
-          fill: "both"
-        });
-      }
-      if (potential) {
-        potential.animate([
-          { opacity: 0, transform: "translateY(24px) scale(0.98)" },
-          { opacity: 1, transform: "translateY(0) scale(1)" }
-        ], {
-          duration: 600,
-          delay: 340,
-          easing: easingCurve,
-          fill: "both"
-        });
-      }
-    } else if (nextView === storyStage) {
-      const visual = nextView.querySelector(".briefing-visual");
-      const content = nextView.querySelector(".briefing-content");
-      if (visual) {
-        visual.animate([
-          { opacity: 0, transform: "translateX(-30px) scale(0.97)" },
-          { opacity: 1, transform: "translateX(0) scale(1)" }
-        ], {
-          duration: 600,
-          delay: 100,
-          easing: easingCurve,
-          fill: "both"
-        });
-      }
-      if (content) {
-        content.animate([
-          { opacity: 0, transform: "translateX(30px) scale(0.97)" },
-          { opacity: 1, transform: "translateX(0) scale(1)" }
-        ], {
-          duration: 600,
-          delay: 180,
-          easing: easingCurve,
-          fill: "both"
-        });
-      }
+    const items = [headerRow, statsRow, chartsRow, potentialCard, actionsRow].filter(Boolean);
+    items.forEach((item, index) => {
+      item.animate([
+        { opacity: 0, transform: "translateY(24px) scale(0.99)" },
+        { opacity: 1, transform: "translateY(0) scale(1)" }
+      ], {
+        duration: 550,
+        delay: 80 + index * 70,
+        easing: easingCurve,
+        fill: "both"
+      });
+    });
+  } else if (nextView === storyStage || nextView === endBriefingStage) {
+    const visual = nextView.querySelector(".briefing-visual");
+    const content = nextView.querySelector(".briefing-content");
+    if (visual) {
+      visual.animate([
+        { opacity: 0, transform: "translateX(-30px) scale(0.97)" },
+        { opacity: 1, transform: "translateX(0) scale(1)" }
+      ], {
+        duration: 600,
+        delay: 100,
+        easing: easingCurve,
+        fill: "both"
+      });
+    }
+    if (content) {
+      content.animate([
+        { opacity: 0, transform: "translateX(30px) scale(0.97)" },
+        { opacity: 1, transform: "translateX(0) scale(1)" }
+      ], {
+        duration: 600,
+        delay: 180,
+        easing: easingCurve,
+        fill: "both"
+      });
     }
   }
 
   let completed = 0;
+  let transitionTimeout = null;
+
+  function forceComplete() {
+    if (!viewTransitioning) return;
+    if (transitionTimeout) {
+      clearTimeout(transitionTimeout);
+      transitionTimeout = null;
+    }
+
+    currentView.hidden = true;
+    currentView.classList.remove("active");
+
+    // Clear main views styling
+    clearAnimatedStyles(currentView);
+    clearAnimatedStyles(nextView);
+    clearAnimatedStyles(morphFlash);
+    clearAnimatedStyles(missionStage);
+    missionStage.classList.remove("is-transitioning");
+
+    // Clear child elements that were stagger-animated
+    const childSelectors = [
+      ".briefing-panel", ".vault-console",
+      ".result-header-row", ".complete-stats",
+      ".result-charts-row", ".potential-card", ".result-actions-row",
+      ".briefing-visual", ".briefing-content"
+    ];
+    childSelectors.forEach(selector => {
+      const el = nextView.querySelector(selector) || currentView.querySelector(selector);
+      if (el) clearAnimatedStyles(el);
+    });
+
+    activeMissionView = nextView;
+    viewTransitioning = false;
+    if (onComplete) onComplete();
+  }
+
   function checkDone() {
     completed++;
     if (completed === 4) {
-      currentView.hidden = true;
-      currentView.classList.remove("active");
-
-      // Clear main views styling
-      clearAnimatedStyles(currentView);
-      clearAnimatedStyles(nextView);
-      clearAnimatedStyles(morphFlash);
-      clearAnimatedStyles(missionStage);
-      missionStage.classList.remove("is-transitioning");
-
-      // Clear child elements that were stagger-animated
-      const childSelectors = [
-        ".briefing-panel", ".vault-console",
-        ".result-summary", ".result-copy", ".cta-box", ".potential-card",
-        ".briefing-visual", ".briefing-content"
-      ];
-      childSelectors.forEach(selector => {
-        const el = nextView.querySelector(selector) || currentView.querySelector(selector);
-        if (el) clearAnimatedStyles(el);
-      });
-
-      activeMissionView = nextView;
-      viewTransitioning = false;
-      if (onComplete) onComplete();
+      forceComplete();
     }
   }
 
@@ -763,6 +766,12 @@ function transitionToView(nextView, onComplete) {
     checkDone();
   };
   fadeInAnim.onfinish = checkDone;
+
+  // Fallback timeout in case any animation is canceled or fails to fire its onfinish event
+  transitionTimeout = window.setTimeout(() => {
+    console.warn("View transition timed out. Forcing completion.");
+    forceComplete();
+  }, 950);
 }
 
 function typeStoryText(text) {
@@ -786,6 +795,30 @@ function setStoryProgress(activeIndex) {
   });
 }
 
+let currentStorySlideIndex = -1;
+
+function updateSubtitles(currentTime) {
+  let index = 0;
+  if (currentTime < 2) {
+    index = 0;
+  } else if (currentTime < 8) {
+    index = 1;
+  } else if (currentTime < 14) {
+    index = 2;
+  } else if (currentTime < 18) {
+    index = 3;
+  } else if (currentTime < 23) {
+    index = 4;
+  } else {
+    index = 5;
+  }
+
+  if (index !== currentStorySlideIndex) {
+    currentStorySlideIndex = index;
+    playBriefingSlide(index);
+  }
+}
+
 function playBriefingSlide(index = 0) {
   const isFinalSlide = index >= storySlides.length - 1;
 
@@ -793,19 +826,9 @@ function playBriefingSlide(index = 0) {
   typeStoryText(storySlides[index]);
   playTone(360 + index * 80, 0.07, 0, "triangle", 0.018);
 
-  const briefingImg = document.querySelector(".briefing-visual img");
-  if (briefingImg) {
-    briefingImg.animate([
-      { transform: "scale(0.97)" },
-      { transform: "scale(1)" }
-    ], {
-      duration: 550,
-      easing: "cubic-bezier(0.1, 0.8, 0.3, 1)"
-    });
-  }
+
 
   if (isFinalSlide) {
-    briefingPlaying = false;
     playBriefingButton.textContent = "Briefing voltooid";
     beginMissionButton.innerHTML = '<span aria-hidden="true">&#9658;</span> Begin de test';
     beginMissionButton.classList.replace("secondary-story-button", "primary-button");
@@ -821,10 +844,7 @@ function playBriefingSlide(index = 0) {
     unlockNote.textContent = "Missie vrijgegeven. Klik op Begin de test om de typetest klaar te zetten.";
     beginMissionButton.focus();
     playMilestoneSound();
-    return;
   }
-
-  storyTimeoutId = window.setTimeout(() => playBriefingSlide(index + 1), 3600);
 }
 
 function startBriefing() {
@@ -842,12 +862,26 @@ function startBriefing() {
   playBriefingButton.textContent = "Miss J spreekt...";
   playStartSound();
   clearTimeout(storyTimeoutId);
-  playBriefingSlide(0);
+
+  if (briefingVideo) {
+    briefingVideo.currentTime = 0;
+    briefingVideo.muted = false;
+    briefingVideo.volume = 1.0;
+    briefingVideo.play().catch(err => console.warn("Video play failed:", err));
+  }
+
+  currentStorySlideIndex = -1;
+  updateSubtitles(0);
 }
 
 function completeOnboarding({ startImmediately = false } = {}) {
   clearTimeout(storyTimeoutId);
   clearInterval(typewriterId);
+
+  if (briefingVideo) {
+    briefingVideo.pause();
+  }
+
   onboardingComplete = true;
   briefingPlaying = false;
   beginMissionButton.disabled = false;
@@ -919,7 +953,9 @@ function typewriteMissionStatus(text) {
 
 function setMissionCopy(status, message) {
   typewriteMissionStatus(status);
-  missionMessage.textContent = message;
+  if (missionMessage) {
+    missionMessage.textContent = message;
+  }
 }
 
 function createAudioContext() {
@@ -1288,6 +1324,19 @@ function resetTest() {
   testArmed = false;
   testReadyToFinish = false;
   testFinished = false;
+  briefingPlaying = false;
+  endBriefingPlaying = false;
+  clearInterval(typewriterId);
+  if (briefingVideo) {
+    briefingVideo.pause();
+  }
+  if (endBriefingVideo) {
+    endBriefingVideo.pause();
+  }
+  const tooltip = document.getElementById("chart-tooltip");
+  if (tooltip) {
+    tooltip.classList.remove("visible");
+  }
   paused = false;
   pauseStartTime = 0;
   totalPausedTime = 0;
@@ -1378,7 +1427,9 @@ function resetTest() {
     resultPanel.hidden = true;
     resultPanel.classList.remove("active");
   }
-  ctaFeedback.textContent = "";
+  if (ctaFeedback) {
+    ctaFeedback.textContent = "";
+  }
   setMissionStep(onboardingComplete ? "ready" : "briefing");
   setMissionCopy(
     onboardingComplete ? "Wacht op start" : "Briefing nodig",
@@ -1526,8 +1577,96 @@ function completeTimedTest() {
   }, 2600);
 }
 
+let endBriefingPlaying = false;
+let currentEndStorySlideIndex = -1;
+
 function showResults() {
-  if (!testReadyToFinish || activeMissionView === resultPanel) return;
+  if (!testReadyToFinish || activeMissionView === resultPanel || activeMissionView === endBriefingStage) return;
+
+  transitionToView(endBriefingStage, () => {
+    startEndBriefing();
+  });
+}
+
+function startEndBriefing() {
+  if (endBriefingPlaying) return;
+
+  createAudioContext();
+  if (audioContext && audioContext.state === "suspended") {
+    audioContext.resume();
+  }
+
+  endBriefingPlaying = true;
+  if (endBriefingVideo) {
+    endBriefingVideo.currentTime = 0;
+    endBriefingVideo.muted = false;
+    endBriefingVideo.volume = 1.0;
+    endBriefingVideo.play().catch(err => console.warn("End video play failed:", err));
+  }
+
+  currentEndStorySlideIndex = -1;
+  updateEndSubtitles(0);
+}
+
+function updateEndSubtitles(currentTime) {
+  let index = 0;
+  if (currentTime < 3) {
+    index = 0;
+  } else if (currentTime < 6) {
+    index = 1;
+  } else if (currentTime < 11) {
+    index = 2;
+  } else if (currentTime < 14) {
+    index = 3;
+  } else if (currentTime < 18) {
+    index = 4;
+  } else if (currentTime < 26) {
+    index = 5;
+  } else {
+    index = 6;
+  }
+
+  if (index !== currentEndStorySlideIndex) {
+    currentEndStorySlideIndex = index;
+    playEndBriefingSlide(index);
+  }
+}
+
+function playEndBriefingSlide(index = 0) {
+  const isFinalSlide = index >= endStorySlides.length - 1;
+
+  const dots = document.querySelectorAll("#endBriefingProgress span");
+  dots.forEach((dot, idx) => {
+    dot.classList.toggle("active", idx <= index);
+  });
+
+  clearInterval(typewriterId);
+  endBriefingText.textContent = "";
+  let textIndex = 0;
+  const slideText = endStorySlides[index];
+  typewriterId = window.setInterval(() => {
+    endBriefingText.textContent += slideText[textIndex];
+    textIndex += 1;
+    if (textIndex >= slideText.length) {
+      clearInterval(typewriterId);
+    }
+  }, 16);
+
+  playTone(360 + index * 80, 0.07, 0, "triangle", 0.018);
+
+
+}
+
+function completeEndBriefing() {
+  if (endBriefingVideo) {
+    endBriefingVideo.pause();
+  }
+  endBriefingPlaying = false;
+  revealResults();
+}
+
+function revealResults() {
+  if (activeMissionView === resultPanel) return;
 
   const stats = resultStats || getTypedStats(finalElapsed);
   let resultIntro = "Wow, goed gedaan zeg! Ik zie dat jij het absoluut in je hebt om een superspion te worden. Met de TypeMission-cursus leren wij je hoe je razendsnel en volledig blind met 10 vingers leert typen!";
@@ -1544,16 +1683,16 @@ function showResults() {
   const spyFactEl = document.querySelector("#spyFact");
   if (spyFactEl) {
     if (stats.apm >= 100 && stats.accuracy < 90) {
-      spyFactEl.innerHTML = "<strong>Leuk feitje:</strong> Je typt lekker snel, maar volleerd spionnen maken bijna geen fouten en typen volledig blind met 10 vingers! Onze cursus traint jou om met 10 vingers foutloos te typen.";
+      spyFactEl.innerHTML = "<strong>Wist je dat:</strong> Geslaagde Super Spionnen typen met wel meer dan 120 aanslagen per minuut, sommigen zelfs wel meer dan 170! Echte spionnen maken bovendien bijna geen fouten en typen volledig blind met 10 vingers. Onze cursus helpt jou om met 10 vingers foutloos te typen!";
     } else if (stats.apm >= 120) {
-      spyFactEl.innerHTML = "<strong>Leuk feitje:</strong> Je typt nu al op het niveau van een volleerd spion (120+ APM)!";
+      spyFactEl.innerHTML = "<strong>Wist je dat:</strong> Geslaagde Super Spionnen typen met wel meer dan 120 aanslagen per minuut, sommigen zelfs wel meer dan 170! Het wereldrecord blindtypen staat op een ongelofelijke snelheid van wel 800+ APM!";
     } else {
-      spyFactEl.innerHTML = "<strong>Wist je dat:</strong> Volleerd spionnen typen met wel meer dan 120 aanslagen per minuut! Wil jij dat ook kunnen? Doe dan onze typecursus en word razendsnel.";
+      spyFactEl.innerHTML = "<strong>Wist je dat:</strong> Geslaagde Super Spionnen typen met wel meer dan 120 aanslagen per minuut, sommigen zelfs wel meer dan 170! Wil jij dat ook leren? Doe dan onze typecursus en word razendsnel.";
     }
   }
 
   resultTitle.textContent = stats.apm >= 120 ? "Kluis gekraakt, superspion!" : (stats.coins >= 260 ? "Kluis gekraakt, rekruut!" : "Missie voltooid, rekruut");
-  resultText.textContent = `${stats.apm} aanslagen per minuut, ${stats.accuracy}% precisie en ${mistakeLabel}. Je kreeg ${stats.coins} Super Spy School coins! ${resultIntro}`;
+  resultText.textContent = resultIntro;
   startButton.disabled = false;
   startButton.innerHTML = '<span aria-hidden="true">&#9658;</span> Nog een poging';
   setMissionStep("result");
@@ -1565,7 +1704,7 @@ function showResults() {
   showInlineComplete(stats);
 
   transitionToView(resultPanel, () => {
-    const agentCard = document.querySelector(".result-agent-card");
+    const agentCard = document.querySelector(".agent-profile-badge");
     if (agentCard) {
       agentCard.animate([
         { transform: "scale(0.94)", opacity: 0.72 },
@@ -1576,7 +1715,7 @@ function showResults() {
       });
     }
 
-    const coinImg = document.querySelector(".reward-total img");
+    const coinImg = document.querySelector(".reward-coin-icon");
     if (coinImg) {
       coinImg.animate([
         { transform: "rotateY(0deg)" },
@@ -1592,6 +1731,9 @@ function showResults() {
     animateValue(completeWpm, 0, stats.apm, 1200);
     animateValue(completeAccuracy, 0, stats.accuracy, 1200, "%");
     animateValue(completeMistakes, 0, stats.mistakes, 1200);
+
+    // Render the animated speed and accuracy charts
+    renderResultCharts(stats.apm, stats.accuracy);
 
     missionStage.scrollIntoView({
       behavior: prefersReducedMotion ? "auto" : "smooth",
@@ -1616,6 +1758,310 @@ function showInlineComplete(stats) {
   completeCoins.textContent = "0";
 
   playCelebrationSound();
+}
+
+function renderResultCharts(apm, accuracy) {
+  const apmContainer = document.querySelector("#apmChartContainer");
+  const accuracyContainer = document.querySelector("#accuracyChartContainer");
+
+  if (!apmContainer || !accuracyContainer) return;
+
+  apmContainer.innerHTML = "";
+  accuracyContainer.innerHTML = "";
+
+  // 1. Calculate APM layout coordinates
+  const userApmX = getApmX(apm);
+  const userApmY = getApmY(userApmX);
+  const apmTargetX = 230;
+  const apmTargetY = getApmY(apmTargetX);
+  const apmAverageX = 370;
+  const apmAverageY = getApmY(apmAverageX);
+  const apmWrX = 550;
+  const apmWrY = getApmY(apmWrX);
+
+  const wrUnlocked = apm >= 120;
+
+  // 2. Generate APM SVG
+  const apmSvg = `
+    <svg viewBox="0 0 600 200" class="spy-svg-chart">
+      <defs>
+        <linearGradient id="apmGlowGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="var(--blue)" />
+          <stop offset="100%" stop-color="var(--purple-soft)" />
+        </linearGradient>
+        <filter id="apmShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="var(--blue)" flood-opacity="0.4"/>
+        </filter>
+      </defs>
+      
+      <!-- Grid Lines -->
+      <line x1="30" y1="25" x2="570" y2="25" stroke="rgba(59, 7, 51, 0.08)" stroke-width="1" />
+      <line x1="30" y1="87" x2="570" y2="87" stroke="rgba(59, 7, 51, 0.08)" stroke-width="1" />
+      <line x1="30" y1="150" x2="570" y2="150" stroke="rgba(59, 7, 51, 0.08)" stroke-width="1" />
+      
+      <!-- Axis Lines -->
+      <line x1="30" y1="150" x2="570" y2="150" stroke="rgba(59, 7, 51, 0.2)" stroke-width="1.5" />
+
+      <!-- Full Background Path (Solid connecting line) -->
+      <path d="${generateCurvePath(30, 550)}" fill="none" stroke="var(--line)" stroke-width="5" stroke-linecap="round" />
+
+      <!-- Target lines (dotted vertical) -->
+      <line x1="${apmTargetX}" y1="${apmTargetY}" x2="${apmTargetX}" y2="150" stroke="rgba(59, 7, 51, 0.35)" stroke-dasharray="3,3" />
+      <line x1="${apmAverageX}" y1="${apmAverageY}" x2="${apmAverageX}" y2="150" stroke="rgba(59, 7, 51, 0.35)" stroke-dasharray="3,3" />
+      <line x1="${apmWrX}" y1="${apmWrY}" x2="${apmWrX}" y2="150" stroke="rgba(59, 7, 51, 0.35)" stroke-dasharray="3,3" />
+
+      <!-- User Pin vertical line -->
+      <line x1="${userApmX}" y1="150" x2="${userApmX}" y2="${userApmY}" class="chart-user-line" stroke="var(--blue)" stroke-width="2" stroke-dasharray="3,3" opacity="0" />
+
+      <!-- Colored Progress Path -->
+      <path d="${generateCurvePath(30, userApmX)}" fill="none" stroke="url(#apmGlowGrad)" stroke-width="6" stroke-linecap="round" class="chart-progress-path" filter="url(#apmShadow)" />
+
+      <!-- Benchmark Nodes -->
+      <!-- Diploma Node -->
+      <g class="chart-node-group" data-tooltip="Diploma: De minimale snelheid die je behaalt na de TypeMission-cursus (120 APM).">
+        <circle cx="${apmTargetX}" cy="${apmTargetY}" r="7" fill="var(--paper)" stroke="var(--orange)" stroke-width="3.5" />
+        <circle cx="${apmTargetX}" cy="${apmTargetY}" r="22" fill="transparent" class="node-hover-hitbox" style="cursor: pointer;" />
+        <text x="${apmTargetX}" y="${apmTargetY + 22}" text-anchor="middle" class="chart-node-label" fill="var(--purple)">Diploma</text>
+        <text x="${apmTargetX}" y="172" text-anchor="middle" class="chart-axis-label-main">120</text>
+        <text x="${apmTargetX}" y="188" text-anchor="middle" class="chart-axis-label-sub">APM</text>
+      </g>
+
+      <!-- Average Node -->
+      <g class="chart-node-group" data-tooltip="Gemiddelde: De gemiddelde snelheid van geslaagde cursisten (167 APM).">
+        <circle cx="${apmAverageX}" cy="${apmAverageY}" r="7" fill="var(--paper)" stroke="var(--panel-blue)" stroke-width="3.5" />
+        <circle cx="${apmAverageX}" cy="${apmAverageY}" r="22" fill="transparent" class="node-hover-hitbox" style="cursor: pointer;" />
+        <text x="${apmAverageX}" y="${apmAverageY + 22}" text-anchor="middle" class="chart-node-label" fill="var(--purple)">Gemiddelde</text>
+        <text x="${apmAverageX}" y="172" text-anchor="middle" class="chart-axis-label-main">167</text>
+        <text x="${apmAverageX}" y="188" text-anchor="middle" class="chart-axis-label-sub">APM</text>
+      </g>
+
+      <!-- World Record Node -->
+      <g class="chart-node-group" data-tooltip="Record: Het absolute wereldrecord blindtypen (800+ APM).">
+        <circle cx="${apmWrX}" cy="${apmWrY}" r="7" fill="${wrUnlocked ? 'var(--paper)' : '#dcdce2'}" stroke="${wrUnlocked ? 'var(--green)' : '#a09da4'}" stroke-width="3.5" />
+        <circle cx="${apmWrX}" cy="${apmWrY}" r="22" fill="transparent" class="node-hover-hitbox" style="cursor: pointer;" />
+        <text x="${apmWrX}" y="${apmWrY + 22}" text-anchor="middle" class="chart-node-label" fill="${wrUnlocked ? 'var(--purple)' : '#a09da4'}">Record</text>
+        <text x="${apmWrX}" y="172" text-anchor="middle" class="chart-axis-label-main" fill="${wrUnlocked ? 'var(--purple)' : '#a09da4'}">800+</text>
+        <text x="${apmWrX}" y="188" text-anchor="middle" class="chart-axis-label-sub" fill="${wrUnlocked ? 'var(--muted)' : '#a09da4'}">APM</text>
+      </g>
+
+      <!-- User Score Pin -->
+      <g class="chart-user-node" opacity="0">
+        <circle cx="${userApmX}" cy="${userApmY}" r="9" fill="var(--blue)" stroke="var(--paper)" stroke-width="3.5" />
+        <circle cx="${userApmX}" cy="${userApmY}" r="16" fill="var(--blue)" opacity="0.25" class="chart-pulse-circle" style="transform-origin: ${userApmX}px ${userApmY}px;" />
+        
+        <!-- User Badge -->
+        <g transform="translate(0, -6)">
+          <rect x="${userApmX - 60}" y="${userApmY - 42}" width="120" height="30" rx="6" fill="var(--purple)" />
+          <polygon points="${userApmX - 5},${userApmY - 12} ${userApmX + 5},${userApmY - 12} ${userApmX},${userApmY - 5}" fill="var(--purple)" />
+          <text x="${userApmX}" y="${userApmY - 22}" text-anchor="middle" font-size="15" font-family="Orbitron" fill="var(--green)" font-weight="700">${apm} APM</text>
+        </g>
+      </g>
+    </svg>
+  `;
+
+  // 3. Calculate Accuracy layout coordinates
+  const userAccX = getAccX(accuracy);
+  const userAccY = getApmY(userAccX);
+  const accTargetX = 230;
+  const accTargetY = getApmY(accTargetX);
+  const accAverageX = 370;
+  const accAverageY = getApmY(accAverageX);
+  const accWrX = 550;
+  const accWrY = getApmY(accWrX);
+
+  const accWrUnlocked = accuracy >= 97;
+
+  // 4. Generate Accuracy SVG
+  const accuracySvg = `
+    <svg viewBox="0 0 600 200" class="spy-svg-chart">
+      <defs>
+        <linearGradient id="accGlowGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="var(--green)" />
+          <stop offset="100%" stop-color="var(--sky)" />
+        </linearGradient>
+        <filter id="accShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="var(--green)" flood-opacity="0.3"/>
+        </filter>
+      </defs>
+      
+      <!-- Grid Lines -->
+      <line x1="30" y1="25" x2="570" y2="25" stroke="rgba(59, 7, 51, 0.08)" stroke-width="1" />
+      <line x1="30" y1="87" x2="570" y2="87" stroke="rgba(59, 7, 51, 0.08)" stroke-width="1" />
+      <line x1="30" y1="150" x2="570" y2="150" stroke="rgba(59, 7, 51, 0.08)" stroke-width="1" />
+      
+      <!-- Axis Lines -->
+      <line x1="30" y1="150" x2="570" y2="150" stroke="rgba(59, 7, 51, 0.2)" stroke-width="1.5" />
+
+      <!-- Full Background Path (Solid connecting line) -->
+      <path d="${generateCurvePath(30, 550)}" fill="none" stroke="var(--line)" stroke-width="5" stroke-linecap="round" />
+
+      <!-- Target lines -->
+      <line x1="${accTargetX}" y1="${accTargetY}" x2="${accTargetX}" y2="150" stroke="rgba(59, 7, 51, 0.35)" stroke-dasharray="3,3" />
+      <line x1="${accAverageX}" y1="${accAverageY}" x2="${accAverageX}" y2="150" stroke="rgba(59, 7, 51, 0.35)" stroke-dasharray="3,3" />
+      <line x1="${accWrX}" y1="${accWrY}" x2="${accWrX}" y2="150" stroke="rgba(59, 7, 51, 0.35)" stroke-dasharray="3,3" />
+
+      <!-- User Pin vertical line -->
+      <line x1="${userAccX}" y1="150" x2="${userAccX}" y2="${userAccY}" class="chart-user-line" stroke="var(--green)" stroke-width="2" stroke-dasharray="3,3" opacity="0" />
+
+      <!-- Colored Progress Path -->
+      <path d="${generateCurvePath(30, userAccX)}" fill="none" stroke="url(#accGlowGrad)" stroke-width="6" stroke-linecap="round" class="chart-progress-path" filter="url(#accShadow)" />
+
+      <!-- Benchmark Nodes -->
+      <!-- Diploma Node -->
+      <g class="chart-node-group" data-tooltip="Diploma: De minimale precisie die vereist is om te slagen (97%).">
+        <circle cx="${accTargetX}" cy="${accTargetY}" r="7" fill="var(--paper)" stroke="var(--orange)" stroke-width="3.5" />
+        <circle cx="${accTargetX}" cy="${accTargetY}" r="22" fill="transparent" class="node-hover-hitbox" style="cursor: pointer;" />
+        <text x="${accTargetX}" y="${accTargetY + 22}" text-anchor="middle" class="chart-node-label" fill="var(--purple)">Diploma</text>
+        <text x="${accTargetX}" y="172" text-anchor="middle" class="chart-axis-label-main">97%</text>
+        <text x="${accTargetX}" y="188" text-anchor="middle" class="chart-axis-label-sub">Precisie</text>
+      </g>
+
+      <!-- Average Node -->
+      <g class="chart-node-group" data-tooltip="Gemiddelde: De gemiddelde precisie van geslaagde cursisten (99%).">
+        <circle cx="${accAverageX}" cy="${accAverageY}" r="7" fill="var(--paper)" stroke="var(--panel-blue)" stroke-width="3.5" />
+        <circle cx="${accAverageX}" cy="${accAverageY}" r="22" fill="transparent" class="node-hover-hitbox" style="cursor: pointer;" />
+        <text x="${accAverageX}" y="${accAverageY + 22}" text-anchor="middle" class="chart-node-label" fill="var(--purple)">Gemiddelde</text>
+        <text x="${accAverageX}" y="172" text-anchor="middle" class="chart-axis-label-main">99%</text>
+        <text x="${accAverageX}" y="188" text-anchor="middle" class="chart-axis-label-sub">Precisie</text>
+      </g>
+
+      <!-- Perfect Node -->
+      <g class="chart-node-group" data-tooltip="Max: De maximale score van 100% foutloze precisie.">
+        <circle cx="${accWrX}" cy="${accWrY}" r="7" fill="${accWrUnlocked ? 'var(--paper)' : '#dcdce2'}" stroke="${accWrUnlocked ? 'var(--green)' : '#a09da4'}" stroke-width="3.5" />
+        <circle cx="${accWrX}" cy="${accWrY}" r="22" fill="transparent" class="node-hover-hitbox" style="cursor: pointer;" />
+        <text x="${accWrX}" y="${accWrY + 22}" text-anchor="middle" class="chart-node-label" fill="${accWrUnlocked ? 'var(--purple)' : '#a09da4'}">Max</text>
+        <text x="${accWrX}" y="172" text-anchor="middle" class="chart-axis-label-main" fill="${accWrUnlocked ? 'var(--purple)' : '#a09da4'}">100%</text>
+        <text x="${accWrX}" y="188" text-anchor="middle" class="chart-axis-label-sub" fill="${accWrUnlocked ? 'var(--muted)' : '#a09da4'}">Precisie</text>
+      </g>
+
+      <!-- User Score Pin -->
+      <g class="chart-user-node" opacity="0">
+        <circle cx="${userAccX}" cy="${userAccY}" r="9" fill="var(--green)" stroke="var(--paper)" stroke-width="3.5" />
+        <circle cx="${userAccX}" cy="${userAccY}" r="16" fill="var(--green)" opacity="0.25" class="chart-pulse-circle" style="transform-origin: ${userAccX}px ${userAccY}px;" />
+        
+        <!-- User Badge -->
+        <g transform="translate(0, -6)">
+          <rect x="${userAccX - 60}" y="${userAccY - 42}" width="120" height="30" rx="6" fill="var(--purple)" />
+          <polygon points="${userAccX - 5},${userAccY - 12} ${userAccX + 5},${userAccY - 12} ${userAccX},${userAccY - 5}" fill="var(--purple)" />
+          <text x="${userAccX}" y="${userAccY - 22}" text-anchor="middle" font-size="15" font-family="Orbitron" fill="var(--green)" font-weight="700">${accuracy}%</text>
+        </g>
+      </g>
+    </svg>
+  `;
+
+  apmContainer.innerHTML = apmSvg;
+  accuracyContainer.innerHTML = accuracySvg;
+
+  // Setup hover tooltips for benchmark nodes
+  setupChartTooltips();
+
+  // 5. Trigger CSS transitions for drawing paths and fading pins
+  setTimeout(() => {
+    document.querySelectorAll(".spy-svg-chart").forEach(svg => {
+      // Find the animated paths
+      const path = svg.querySelector(".chart-progress-path");
+      if (path) {
+        const length = path.getTotalLength();
+        // Setup line style
+        path.style.strokeDasharray = length;
+        path.style.strokeDashoffset = length;
+        
+        // Force reflow
+        path.getBoundingClientRect();
+        
+        // Trigger draw animation
+        path.style.transition = "stroke-dashoffset 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+        path.style.strokeDashoffset = "0";
+      }
+
+      // After path finishes drawing, fade in user node and line
+      setTimeout(() => {
+        const userLine = svg.querySelector(".chart-user-line");
+        const userNode = svg.querySelector(".chart-user-node");
+        if (userLine) {
+          userLine.style.transition = "opacity 0.6s ease";
+          userLine.style.opacity = "1";
+        }
+        if (userNode) {
+          userNode.style.transition = "opacity 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)";
+          userNode.style.opacity = "1";
+        }
+      }, 1500);
+    });
+  }, 100);
+}
+
+function setupChartTooltips() {
+  let tooltip = document.getElementById("chart-tooltip");
+  if (!tooltip) {
+    tooltip = document.createElement("div");
+    tooltip.id = "chart-tooltip";
+    tooltip.className = "chart-tooltip";
+    document.body.appendChild(tooltip);
+  }
+
+  const nodes = document.querySelectorAll(".chart-node-group");
+  nodes.forEach(node => {
+    node.addEventListener("mouseenter", () => {
+      const text = node.getAttribute("data-tooltip");
+      if (!text) return;
+      tooltip.textContent = text;
+      tooltip.classList.add("visible");
+      
+      const rect = node.getBoundingClientRect();
+      const tooltipX = rect.left + window.scrollX + rect.width / 2;
+      const tooltipY = rect.top + window.scrollY - 10;
+      
+      tooltip.style.left = `${tooltipX}px`;
+      tooltip.style.top = `${tooltipY}px`;
+    });
+
+    node.addEventListener("mouseleave", () => {
+      tooltip.classList.remove("visible");
+    });
+  });
+}
+
+// Coordinate Helpers for speed (APM)
+function getApmX(val) {
+  if (val <= 120) {
+    return 30 + (Math.max(0, val) / 120) * 200;
+  } else if (val <= 167) {
+    return 230 + ((val - 120) / (167 - 120)) * 140;
+  } else {
+    return 370 + (Math.min(800, val - 167) / (800 - 167)) * 180;
+  }
+}
+
+// Coordinate Helpers for accuracy (Netheid)
+function getAccX(val) {
+  const minAcc = 75; // Clamped at 75% visually
+  if (val <= 97) {
+    const pct = Math.max(0, (val - minAcc) / (97 - minAcc));
+    return 30 + pct * 200;
+  } else if (val <= 99) {
+    return 230 + ((val - 97) / (99 - 97)) * 140;
+  } else {
+    return 370 + ((val - 99) / (100 - 99)) * 180;
+  }
+}
+
+// Coordinate Helper for Y coordinate along easeOutQuad curve
+function getApmY(x) {
+  const t = (x - 30) / 520;
+  return 150 - (t * (2 - t)) * 125;
+}
+
+// Helper to generate coordinates path dynamically
+function generateCurvePath(startX, endX) {
+  let pathStr = `M ${startX},${getApmY(startX).toFixed(1)}`;
+  const steps = 30;
+  for (let i = 1; i <= steps; i++) {
+    const x = startX + (i / steps) * (endX - startX);
+    const y = getApmY(x);
+    pathStr += ` L ${x.toFixed(1)},${y.toFixed(1)}`;
+  }
+  return pathStr;
 }
 
 function animateValue(element, start, end, duration, suffix = "") {
@@ -1775,6 +2221,36 @@ retryResultButton.addEventListener("click", () => {
 playBriefingButton.addEventListener("click", startBriefing);
 beginMissionButton.addEventListener("click", () => completeOnboarding({ startImmediately: true }));
 
+if (briefingVideo) {
+  briefingVideo.addEventListener("timeupdate", () => {
+    if (briefingPlaying) {
+      updateSubtitles(briefingVideo.currentTime);
+    }
+  });
+  briefingVideo.addEventListener("ended", () => {
+    if (briefingPlaying) {
+      completeOnboarding();
+    }
+  });
+}
+
+if (skipEndBriefingButton) {
+  skipEndBriefingButton.addEventListener("click", completeEndBriefing);
+}
+
+if (endBriefingVideo) {
+  endBriefingVideo.addEventListener("timeupdate", () => {
+    if (endBriefingPlaying) {
+      updateEndSubtitles(endBriefingVideo.currentTime);
+    }
+  });
+  endBriefingVideo.addEventListener("ended", () => {
+    if (endBriefingPlaying) {
+      completeEndBriefing();
+    }
+  });
+}
+
 startMissionHero.addEventListener("click", (event) => {
   if (!onboardingComplete) {
     event.preventDefault();
@@ -1796,11 +2272,15 @@ soundToggle.addEventListener("click", () => {
 });
 
 trialButton.addEventListener("click", () => {
-  ctaFeedback.textContent = "Top! Mr. I zet jouw eerste geheime missie klaar.";
+  if (ctaFeedback) {
+    ctaFeedback.textContent = "Top! Mr. I zet jouw eerste geheime missie klaar.";
+  }
 });
 
 buyButton.addEventListener("click", () => {
-  ctaFeedback.textContent = "Cursus gekozen. De SuperSpySchool opent het dossier.";
+  if (ctaFeedback) {
+    ctaFeedback.textContent = "Cursus gekozen. De SuperSpySchool opent het dossier.";
+  }
 });
 
 function decryptCoupon(element, targetCode) {

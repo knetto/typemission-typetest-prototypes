@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>TypeMission Typetest — Kraak de kluis</title>
-  <link rel="stylesheet" href="styles.css?v=15">
+  <link rel="stylesheet" href="styles.css?v=27">
 </head>
 
 <body>
@@ -102,7 +102,7 @@
           <!-- ── BRIEFING ── -->
           <section class="mission-view mission-briefing-card active" id="storyStage" aria-labelledby="storyTitle">
             <div class="briefing-visual" aria-label="Miss J briefing animatie">
-              <img src="assets/can_u_make_her_wave_202605151230.jpeg" alt="Miss J">
+              <video id="briefingVideo" src="assets/start.mov" poster="assets/can_u_make_her_wave_202605151230.jpeg" playsinline></video>
               <span class="story-scanline" aria-hidden="true"></span>
               <span class="story-live-badge">Miss J live</span>
             </div>
@@ -114,6 +114,8 @@
               </div>
               <div class="story-progress" aria-hidden="true">
                 <span class="active"></span>
+                <span></span>
+                <span></span>
                 <span></span>
                 <span></span>
                 <span></span>
@@ -133,35 +135,6 @@
 
           <!-- ── VAULT GAME ── -->
           <div class="mission-view vault-game" id="missionLayout" hidden>
-            <!-- Sidebar with agent -->
-            <aside class="briefing-panel" aria-label="Miss J briefing">
-              <div class="agent-media">
-                <img src="assets/miss-j-classroom.png" alt="Miss J in de SuperSpySchool">
-                <span class="agent-live">Miss J online</span>
-              </div>
-              <div class="agent-copy">
-                <p class="speech-label">Miss J</p>
-                <p id="missionMessage">
-                  Welkom bij de SuperSpySchool, rekruut. Klik op start en typ
-                  de code na. De timer start pas bij je eerste letter.
-                </p>
-              </div>
-              <div class="mini-game-card">
-                <img src="assets/codeblaster.webp" alt="Codeblaster">
-                <div>
-                  <strong>Codeblaster</strong>
-                  <span>Probeer ook de andere typespelletjes.</span>
-                </div>
-              </div>
-              <div class="mini-game-card">
-                <img src="assets/typetris.webp" alt="Typetris">
-                <div>
-                  <strong>Typetris</strong>
-                  <span>Stapelen, typen en blijven oefenen.</span>
-                </div>
-              </div>
-            </aside>
-
             <!-- Vault console -->
             <section class="vault-console" aria-label="Kluiskraker typetest">
               <div class="mission-topbar">
@@ -189,11 +162,6 @@
                 </div>
               </div>
 
-              <ol class="mission-steps" aria-label="Missiestappen">
-                <li class="active" data-step="briefing"><span>1</span> Briefing</li>
-                <li data-step="typing"><span>2</span> Kraken</li>
-                <li data-step="result"><span>3</span> Uitslag</li>
-              </ol>
 
               <!-- Vault body -->
               <div class="vault-body" id="vaultBody">
@@ -325,65 +293,187 @@
                 </div>
               </div>
             </section>
+
+            <!-- Vault footer other games -->
+            <div class="vault-games-footer">
+              <h3 class="vault-games-title">Oefen verder met andere opdrachten</h3>
+              <div class="vault-games-grid">
+                <a class="mini-game-card-new" href="https://www.typemission.be/codeblaster/">
+                  <img src="assets/codeblaster.webp" alt="Codeblaster">
+                  <div class="game-card-details">
+                    <strong>Codeblaster</strong>
+                    <span>Probeer ook de andere typespelletjes.</span>
+                  </div>
+                </a>
+                <a class="mini-game-card-new" href="https://www.typemission.be/typetris/">
+                  <img src="assets/typetris.webp" alt="Typetris">
+                  <div class="game-card-details">
+                    <strong>Typetris</strong>
+                    <span>Stapelen, typen en blijven oefenen.</span>
+                  </div>
+                </a>
+              </div>
+            </div>
           </div>
 
+          <!-- ── END BRIEFING ── -->
+          <section class="mission-view mission-briefing-card" id="endBriefingStage" aria-labelledby="endBriefingTitle" hidden>
+            <div class="briefing-visual" aria-label="Miss J eindbriefing animatie">
+              <video id="endBriefingVideo" src="assets/end.mov" poster="assets/can_u_make_her_wave_202605151230.jpeg" playsinline></video>
+              <span class="story-scanline" aria-hidden="true"></span>
+              <span class="story-live-badge">Miss J live</span>
+            </div>
+            <div class="briefing-content">
+              <p class="eyebrow dark">Super Spy School</p>
+              <h3 id="endBriefingTitle">Gefeliciteerd, rekruut!</h3>
+              <div class="story-transmission" id="endBriefingText" aria-live="polite">
+                Geweldig, je hebt het gehaald!
+              </div>
+              <div class="story-progress" id="endBriefingProgress" aria-hidden="true">
+                <span class="active"></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+              <div class="story-actions">
+                <button class="primary-button" id="skipEndBriefingButton" type="button">
+                  Sla video over
+                </button>
+              </div>
+            </div>
+          </section>
+
           <!-- ── RESULT ── -->
-          <section class="mission-view result-panel" id="resultPanel" aria-live="polite" hidden>
-            <div class="result-summary">
-              <div class="result-agent-card">
-                <img src="assets/Make_her_two_thumbs_up_202605151233.jpeg" alt="Miss J lacht naar de rekruut">
-                <span class="complete-badge" id="rankBadge">Rekruut</span>
-              </div>
-              <div class="reward-card">
-                <span class="reward-label">Beloning</span>
-                <strong class="reward-total">
-                  <img src="coin.svg" alt="" aria-hidden="true">
-                  <span id="completeCoins">0</span>
-                </strong>
-                <p>Super Spy School coins</p>
-              </div>
-            </div>
-            <div class="result-copy">
-              <p class="eyebrow dark">Uitslag</p>
+          <section class="mission-view result-panel-new" id="resultPanel" aria-live="polite" hidden>
+            
+            <!-- 1. Results Title Block -->
+            <div class="result-title-block">
+              <p class="eyebrow dark">Uitslag van de test</p>
               <h2 id="resultTitle">Kluis gekraakt!</h2>
-              <p id="resultText"></p>
-              <div class="complete-stats">
-                <div>
-                  <strong id="completeWpm">0</strong>
-                  <span>aanslagen per minuut</span>
-                </div>
-                <div>
-                  <strong id="completeAccuracy">100%</strong>
-                  <span>precisie</span>
-                </div>
-                <div>
-                  <strong id="completeMistakes">0</strong>
-                  <span>fouten</span>
+            </div>
+
+            <!-- 2. Header Row (Miss J Transmission & Agent Badge) -->
+            <div class="result-header-row">
+              <div class="result-header-left">
+                <div class="debriefing-card">
+                  <div class="debriefing-header">
+                    <span class="debriefing-sender">HQ TRANSMISSION // COMMANDER Miss J</span>
+                    <div class="equalizer-bars" aria-hidden="true">
+                      <span class="eq-bar"></span>
+                      <span class="eq-bar"></span>
+                      <span class="eq-bar"></span>
+                      <span class="eq-bar"></span>
+                      <span class="eq-bar"></span>
+                    </div>
+                    <span class="comms-status-badge" aria-hidden="true">COMMS SECURE</span>
+                  </div>
+                  <div class="debriefing-body">
+                    <div class="debriefing-avatar-wrapper">
+                      <img src="assets/Make_her_two_thumbs_up_202605151233.jpeg" alt="Miss J" class="debriefing-avatar">
+                      <span class="live-pulse-dot" aria-hidden="true"></span>
+                    </div>
+                    <div class="debriefing-text-content">
+                      <p id="resultText"></p>
+                      <div class="debriefing-footer-meta" aria-hidden="true">DECRYPTION LEVEL 100% // NO CORRUPTION</div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <p class="spy-fact" id="spyFact">
-                Bij TypeMission oefen je stap voor stap tot je snel en foutloos
-                blind kunt typen met tien vingers.
-              </p>
+              
+              <div class="result-header-right">
+                <div class="agent-profile-badge">
+                  <!-- Glossy sheen reflection layer -->
+                  <div class="badge-gloss-overlay" aria-hidden="true"></div>
+                  
+                  <div class="badge-security-header">
+                    <span>SECURITY CLEARANCE</span>
+                    <span class="clearance-level">LEVEL 2</span>
+                  </div>
+                  
+                  <div class="badge-main-content">
+                    <div class="agent-id-photo-area" aria-label="Geheime agent identificatie">
+                      <div class="photo-grid-lines" aria-hidden="true"></div>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="agent-card-icon">
+                        <path d="M17 10h1a1 1 0 0 1 1 1v1a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-1a1 1 0 0 1 1-1h1M7 10V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v4" fill="currentColor" opacity="0.15" />
+                        <path d="M3 14h18" />
+                        <path d="M7 17a2 2 0 1 0 4 0h2a2 2 0 1 0 4 0" />
+                        <path d="M11 17h2" />
+                      </svg>
+                      <div class="scan-reticle" aria-hidden="true"></div>
+                      <span class="photo-scan-status" aria-hidden="true">ACTIVE</span>
+                    </div>
+                    
+                    <div class="agent-meta-info">
+                      <div class="meta-row-top">
+                        <span class="agent-label">AGENT ID: TM-9824</span>
+                        <!-- Holographic Micro-chip -->
+                        <div class="badge-chip" aria-hidden="true" title="Secure Encryption Chip">
+                          <span class="chip-inner-pattern"></span>
+                        </div>
+                      </div>
+                      <strong class="agent-rank-name" id="rankBadge">Rekruut</strong>
+                      <div class="agent-reward-box">
+                        <img src="coin.svg" alt="" aria-hidden="true" class="reward-coin-icon">
+                        <span id="completeCoins">0</span> coins
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Barcode Access sticker footer -->
+                  <div class="badge-barcode-section">
+                    <div class="badge-barcode" aria-hidden="true">
+                      <div class="badge-barcode-lines"></div>
+                    </div>
+                    <div class="badge-serial" aria-hidden="true">SYS.CODE: 8824-AANS-KL</div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="cta-box">
-              <p class="cta-label">Volgende stap</p>
-              <a class="cta-button" id="trialButton" href="https://www.typemission.be/proefles/">
-                Speel gratis proefles
-              </a>
-              <p class="cta-help">Ga samen met Mr. I op je allereerste geheime missie.</p>
-              <a class="buy-button" id="buyButton" href="https://www.typemission.be/typecursus-bestellen/">
-                Koop de cursus
-              </a>
-              <button class="ghost-button result-retry-button" id="retryResultButton" type="button">
-                <span aria-hidden="true">&#8635;</span>
-                Nog een poging
-              </button>
-              <p class="tiny-feedback" id="ctaFeedback" aria-live="polite"></p>
+
+            <!-- 2. Premium Stats Row -->
+            <div class="complete-stats">
+              <div>
+                <strong id="completeWpm">0</strong>
+                <span>aanslagen per minuut</span>
+              </div>
+              <div>
+                <strong id="completeAccuracy">100%</strong>
+                <span>precisie</span>
+              </div>
+              <div>
+                <strong id="completeMistakes">0</strong>
+                <span>fouten</span>
+              </div>
             </div>
+
+            <!-- 3. Animated Line Graphs (Side-by-Side) -->
+            <div class="result-charts-row" aria-label="Resultaat grafieken">
+              <div class="chart-box" id="apmChartBox">
+                <h4 class="chart-title">Snelheid (aanslagen per minuut)</h4>
+                <div class="chart-wrapper">
+                  <div class="chart-container" id="apmChartContainer"></div>
+                </div>
+              </div>
+              <div class="chart-box" id="accuracyChartBox">
+                <h4 class="chart-title">Netheid (precisie)</h4>
+                <div class="chart-wrapper">
+                  <div class="chart-container" id="accuracyChartContainer"></div>
+                </div>
+              </div>
+            </div>
+
+            <p class="spy-fact-new" id="spyFact">
+              Bij TypeMission oefen je stap voor stap tot je snel en foutloos blind kunt typen met tien vingers.
+            </p>
+
+            <!-- 4. Top Secret Spy Dossier (Discount Card) -->
             <div class="potential-card">
+              <div class="classified-stamp">TOEGELATEN</div>
               <div class="potential-info">
-                <span class="potential-badge">GEHEIM RAPPORT</span>
+                <span class="potential-badge">TOP SECRET</span>
                 <h3 class="potential-header">Rekruut toont uitzonderlijke potentie</h3>
                 <p class="potential-text">
                   Ons hoofdkwartier heeft je resultaten geanalyseerd: je toont buitengewoon veel aanleg voor het spionnenwerk! We willen je heel graag verder opleiden op de <strong>SuperSpySchool</strong> tot volwaardig geheim agent.
@@ -394,6 +484,32 @@
                 <strong class="coupon-code locked" id="couponCode" title="Klik om de code te ontcijferen">ONTCIJFER CODE</strong>
               </div>
             </div>
+
+            <!-- 5. Actions Block (CTAs Row at the bottom) -->
+            <div class="result-actions-row">
+              <div class="action-card trial">
+                <a class="cta-button-flat trial" id="trialButton" href="https://www.typemission.be/proefles/">
+                  Speel gratis proefles
+                </a>
+                <span class="action-desc">Ontdek direct hoe de typecursus werkt. Geen account nodig, start direct!</span>
+              </div>
+              
+              <div class="action-card buy">
+                <a class="cta-button-flat buy" id="buyButton" href="https://www.typemission.be/typecursus-bestellen/">
+                  Koop de cursus
+                </a>
+                <span class="action-desc">Krijg direct toegang tot alle 20 weken van het spionnenverhaal en leer blindtypen met 10 vingers.</span>
+              </div>
+
+              <div class="action-card retry">
+                <button class="cta-button-flat retry" id="retryResultButton" type="button">
+                  <span aria-hidden="true">&#8635;</span> Nog een poging
+                </button>
+                <span class="action-desc">Kraak de kluis opnieuw en verbeter je APM record!</span>
+              </div>
+            </div>
+            
+            <p class="cta-feedback-new" id="ctaFeedback"></p>
           </section>
         </div>
       </div>
@@ -443,7 +559,7 @@
     <p>Leer typen als een superspion!</p>
   </footer>
 
-  <script src="script.js?v=15"></script>
+  <script src="script.js?v=27"></script>
 </body>
 
 </html>
