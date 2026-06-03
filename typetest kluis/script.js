@@ -406,6 +406,7 @@ const completeCoins = document.querySelector("#completeCoins");
 const rankBadge = document.querySelector("#rankBadge");
 const unlockNote = document.querySelector("#unlockNote");
 const retryResultButton = document.querySelector("#retryResultButton");
+const startLiveBadge = document.querySelector("#startLiveBadge");
 
 // Vault elements
 const vaultDial = document.querySelector("#vaultDial");
@@ -675,8 +676,9 @@ function transitionToView(nextView, onComplete) {
     const chartsRow = nextView.querySelector(".result-charts-row");
     const potentialCard = nextView.querySelector(".potential-card");
     const actionsRow = nextView.querySelector(".result-actions-row");
+    const gamesFooter = nextView.querySelector(".vault-games-footer");
 
-    const items = [headerRow, statsRow, chartsRow, potentialCard, actionsRow].filter(Boolean);
+    const items = [headerRow, statsRow, chartsRow, potentialCard, actionsRow, gamesFooter].filter(Boolean);
     items.forEach((item, index) => {
       item.animate([
         { opacity: 0, transform: "translateY(24px) scale(0.99)" },
@@ -691,6 +693,7 @@ function transitionToView(nextView, onComplete) {
   } else if (nextView === storyStage || nextView === endBriefingStage) {
     const visual = nextView.querySelector(".briefing-visual");
     const content = nextView.querySelector(".briefing-content");
+    const gamesFooter = nextView.querySelector(".vault-games-footer");
     if (visual) {
       visual.animate([
         { opacity: 0, transform: "translateX(-30px) scale(0.97)" },
@@ -709,6 +712,17 @@ function transitionToView(nextView, onComplete) {
       ], {
         duration: 600,
         delay: 180,
+        easing: easingCurve,
+        fill: "both"
+      });
+    }
+    if (gamesFooter) {
+      gamesFooter.animate([
+        { opacity: 0, transform: "translateY(24px) scale(0.99)" },
+        { opacity: 1, transform: "translateY(0) scale(1)" }
+      ], {
+        duration: 550,
+        delay: 250,
         easing: easingCurve,
         fill: "both"
       });
@@ -740,7 +754,7 @@ function transitionToView(nextView, onComplete) {
       ".briefing-panel", ".vault-console",
       ".result-header-row", ".complete-stats",
       ".result-charts-row", ".potential-card", ".result-actions-row",
-      ".briefing-visual", ".briefing-content"
+      ".briefing-visual", ".briefing-content", ".vault-games-footer"
     ];
     childSelectors.forEach(selector => {
       const el = nextView.querySelector(selector) || currentView.querySelector(selector);
@@ -847,6 +861,48 @@ function playBriefingSlide(index = 0) {
   }
 }
 
+function triggerVideoGlitch(hudElement, onComplete) {
+  if (!hudElement) {
+    if (onComplete) onComplete();
+    return;
+  }
+
+  if (hudElement.glitchTimeout) {
+    clearTimeout(hudElement.glitchTimeout);
+  }
+
+  hudElement.classList.add("glitch-active");
+  playGlitchSound();
+
+  hudElement.glitchTimeout = window.setTimeout(() => {
+    hudElement.classList.remove("glitch-active");
+    hudElement.glitchTimeout = null;
+    if (onComplete) onComplete();
+  }, 800);
+}
+
+function clearVideoGlitch(hudElement) {
+  if (!hudElement) return;
+  hudElement.classList.remove("glitch-active");
+  if (hudElement.glitchTimeout) {
+    clearTimeout(hudElement.glitchTimeout);
+    hudElement.glitchTimeout = null;
+  }
+}
+
+function playGlitchSound() {
+  if (!soundEnabled || !audioContext) return;
+  // Synthesize digital static glitch connection sounds
+  for (let i = 0; i < 6; i++) {
+    const freq = 150 + Math.random() * 850;
+    const duration = 0.02 + Math.random() * 0.04;
+    const delay = i * 0.06;
+    const type = Math.random() > 0.5 ? "square" : "sawtooth";
+    const volume = 0.005 + Math.random() * 0.008;
+    playTone(freq, duration, delay, type, volume);
+  }
+}
+
 function startBriefing() {
   if (briefingPlaying) return;
 
@@ -856,6 +912,10 @@ function startBriefing() {
   }
 
   briefingPlaying = true;
+  if (startLiveBadge) {
+    startLiveBadge.textContent = "Miss J live";
+    startLiveBadge.classList.remove("calling");
+  }
   beginMissionButton.disabled = false;
   beginMissionButton.textContent = "Sla briefing over";
   playBriefingButton.disabled = true;
@@ -863,15 +923,25 @@ function startBriefing() {
   playStartSound();
   clearTimeout(storyTimeoutId);
 
+  // Clear existing subtitles typewriter and show connecting text
+  clearInterval(typewriterId);
+  storyText.textContent = "Verbinding maken...";
+
+  currentStorySlideIndex = -1;
+
   if (briefingVideo) {
     briefingVideo.currentTime = 0;
     briefingVideo.muted = false;
     briefingVideo.volume = 1.0;
-    briefingVideo.play().catch(err => console.warn("Video play failed:", err));
+    triggerVideoGlitch(briefingVideo.closest(".briefing-avatar-hud"), () => {
+      if (briefingPlaying) {
+        briefingVideo.play().catch(err => console.warn("Video play failed:", err));
+        updateSubtitles(0);
+      }
+    });
+  } else {
+    updateSubtitles(0);
   }
-
-  currentStorySlideIndex = -1;
-  updateSubtitles(0);
 }
 
 function completeOnboarding({ startImmediately = false } = {}) {
@@ -880,6 +950,7 @@ function completeOnboarding({ startImmediately = false } = {}) {
 
   if (briefingVideo) {
     briefingVideo.pause();
+    clearVideoGlitch(briefingVideo.closest(".briefing-avatar-hud"));
   }
 
   onboardingComplete = true;
@@ -1329,9 +1400,11 @@ function resetTest() {
   clearInterval(typewriterId);
   if (briefingVideo) {
     briefingVideo.pause();
+    clearVideoGlitch(briefingVideo.closest(".briefing-avatar-hud"));
   }
   if (endBriefingVideo) {
     endBriefingVideo.pause();
+    clearVideoGlitch(endBriefingVideo.closest(".briefing-avatar-hud"));
   }
   const tooltip = document.getElementById("chart-tooltip");
   if (tooltip) {
@@ -1583,9 +1656,8 @@ let currentEndStorySlideIndex = -1;
 function showResults() {
   if (!testReadyToFinish || activeMissionView === resultPanel || activeMissionView === endBriefingStage) return;
 
-  transitionToView(endBriefingStage, () => {
-    startEndBriefing();
-  });
+  startEndBriefing();
+  transitionToView(endBriefingStage);
 }
 
 function startEndBriefing() {
@@ -1597,15 +1669,26 @@ function startEndBriefing() {
   }
 
   endBriefingPlaying = true;
+
+  // Clear existing subtitles typewriter and show connecting text
+  clearInterval(typewriterId);
+  endBriefingText.textContent = "Verbinding maken...";
+
+  currentEndStorySlideIndex = -1;
+
   if (endBriefingVideo) {
     endBriefingVideo.currentTime = 0;
     endBriefingVideo.muted = false;
     endBriefingVideo.volume = 1.0;
-    endBriefingVideo.play().catch(err => console.warn("End video play failed:", err));
+    triggerVideoGlitch(endBriefingVideo.closest(".briefing-avatar-hud"), () => {
+      if (endBriefingPlaying) {
+        endBriefingVideo.play().catch(err => console.warn("End video play failed:", err));
+        updateEndSubtitles(0);
+      }
+    });
+  } else {
+    updateEndSubtitles(0);
   }
-
-  currentEndStorySlideIndex = -1;
-  updateEndSubtitles(0);
 }
 
 function updateEndSubtitles(currentTime) {
@@ -1660,6 +1743,7 @@ function playEndBriefingSlide(index = 0) {
 function completeEndBriefing() {
   if (endBriefingVideo) {
     endBriefingVideo.pause();
+    clearVideoGlitch(endBriefingVideo.closest(".briefing-avatar-hud"));
   }
   endBriefingPlaying = false;
   revealResults();
@@ -1828,7 +1912,7 @@ function renderResultCharts(apm, accuracy) {
 
       <!-- Average Node -->
       <g class="chart-node-group" data-tooltip="Gemiddelde: De gemiddelde snelheid van geslaagde cursisten (167 APM).">
-        <circle cx="${apmAverageX}" cy="${apmAverageY}" r="7" fill="var(--paper)" stroke="var(--panel-blue)" stroke-width="3.5" />
+        <circle cx="${apmAverageX}" cy="${apmAverageY}" r="7" fill="var(--paper)" stroke="var(--blue)" stroke-width="3.5" />
         <circle cx="${apmAverageX}" cy="${apmAverageY}" r="22" fill="transparent" class="node-hover-hitbox" style="cursor: pointer;" />
         <text x="${apmAverageX}" y="${apmAverageY + 22}" text-anchor="middle" class="chart-node-label" fill="var(--purple)">Gemiddelde</text>
         <text x="${apmAverageX}" y="172" text-anchor="middle" class="chart-axis-label-main">167</text>
@@ -1837,7 +1921,7 @@ function renderResultCharts(apm, accuracy) {
 
       <!-- World Record Node -->
       <g class="chart-node-group" data-tooltip="Record: Het absolute wereldrecord blindtypen (800+ APM).">
-        <circle cx="${apmWrX}" cy="${apmWrY}" r="7" fill="${wrUnlocked ? 'var(--paper)' : '#dcdce2'}" stroke="${wrUnlocked ? 'var(--green)' : '#a09da4'}" stroke-width="3.5" />
+        <circle cx="${apmWrX}" cy="${apmWrY}" r="7" fill="${wrUnlocked ? 'var(--paper)' : '#dcdce2'}" stroke="${wrUnlocked ? 'var(--orange)' : '#a09da4'}" stroke-width="3.5" />
         <circle cx="${apmWrX}" cy="${apmWrY}" r="22" fill="transparent" class="node-hover-hitbox" style="cursor: pointer;" />
         <text x="${apmWrX}" y="${apmWrY + 22}" text-anchor="middle" class="chart-node-label" fill="${wrUnlocked ? 'var(--purple)' : '#a09da4'}">Record</text>
         <text x="${apmWrX}" y="172" text-anchor="middle" class="chart-axis-label-main" fill="${wrUnlocked ? 'var(--purple)' : '#a09da4'}">800+</text>
@@ -1853,7 +1937,7 @@ function renderResultCharts(apm, accuracy) {
         <g transform="translate(0, -6)">
           <rect x="${userApmX - 60}" y="${userApmY - 42}" width="120" height="30" rx="6" fill="var(--purple)" />
           <polygon points="${userApmX - 5},${userApmY - 12} ${userApmX + 5},${userApmY - 12} ${userApmX},${userApmY - 5}" fill="var(--purple)" />
-          <text x="${userApmX}" y="${userApmY - 22}" text-anchor="middle" font-size="15" font-family="Orbitron" fill="var(--green)" font-weight="700">${apm} APM</text>
+          <text x="${userApmX}" y="${userApmY - 22}" text-anchor="middle" font-size="15" font-family="Orbitron" fill="var(--paper)" font-weight="700">${apm} APM</text>
         </g>
       </g>
     </svg>
@@ -1876,11 +1960,11 @@ function renderResultCharts(apm, accuracy) {
     <svg viewBox="0 0 600 200" class="spy-svg-chart">
       <defs>
         <linearGradient id="accGlowGrad" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stop-color="var(--green)" />
-          <stop offset="100%" stop-color="var(--sky)" />
+          <stop offset="0%" stop-color="var(--purple)" />
+          <stop offset="100%" stop-color="var(--orange-soft)" />
         </linearGradient>
         <filter id="accShadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="var(--green)" flood-opacity="0.3"/>
+          <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="var(--purple-soft)" flood-opacity="0.3"/>
         </filter>
       </defs>
       
@@ -1901,7 +1985,7 @@ function renderResultCharts(apm, accuracy) {
       <line x1="${accWrX}" y1="${accWrY}" x2="${accWrX}" y2="150" stroke="rgba(59, 7, 51, 0.35)" stroke-dasharray="3,3" />
 
       <!-- User Pin vertical line -->
-      <line x1="${userAccX}" y1="150" x2="${userAccX}" y2="${userAccY}" class="chart-user-line" stroke="var(--green)" stroke-width="2" stroke-dasharray="3,3" opacity="0" />
+      <line x1="${userAccX}" y1="150" x2="${userAccX}" y2="${userAccY}" class="chart-user-line" stroke="var(--purple)" stroke-width="2" stroke-dasharray="3,3" opacity="0" />
 
       <!-- Colored Progress Path -->
       <path d="${generateCurvePath(30, userAccX)}" fill="none" stroke="url(#accGlowGrad)" stroke-width="6" stroke-linecap="round" class="chart-progress-path" filter="url(#accShadow)" />
@@ -1918,7 +2002,7 @@ function renderResultCharts(apm, accuracy) {
 
       <!-- Average Node -->
       <g class="chart-node-group" data-tooltip="Gemiddelde: De gemiddelde precisie van geslaagde cursisten (99%).">
-        <circle cx="${accAverageX}" cy="${accAverageY}" r="7" fill="var(--paper)" stroke="var(--panel-blue)" stroke-width="3.5" />
+        <circle cx="${accAverageX}" cy="${accAverageY}" r="7" fill="var(--paper)" stroke="var(--blue)" stroke-width="3.5" />
         <circle cx="${accAverageX}" cy="${accAverageY}" r="22" fill="transparent" class="node-hover-hitbox" style="cursor: pointer;" />
         <text x="${accAverageX}" y="${accAverageY + 22}" text-anchor="middle" class="chart-node-label" fill="var(--purple)">Gemiddelde</text>
         <text x="${accAverageX}" y="172" text-anchor="middle" class="chart-axis-label-main">99%</text>
@@ -1927,7 +2011,7 @@ function renderResultCharts(apm, accuracy) {
 
       <!-- Perfect Node -->
       <g class="chart-node-group" data-tooltip="Max: De maximale score van 100% foutloze precisie.">
-        <circle cx="${accWrX}" cy="${accWrY}" r="7" fill="${accWrUnlocked ? 'var(--paper)' : '#dcdce2'}" stroke="${accWrUnlocked ? 'var(--green)' : '#a09da4'}" stroke-width="3.5" />
+        <circle cx="${accWrX}" cy="${accWrY}" r="7" fill="${accWrUnlocked ? 'var(--paper)' : '#dcdce2'}" stroke="${accWrUnlocked ? 'var(--orange)' : '#a09da4'}" stroke-width="3.5" />
         <circle cx="${accWrX}" cy="${accWrY}" r="22" fill="transparent" class="node-hover-hitbox" style="cursor: pointer;" />
         <text x="${accWrX}" y="${accWrY + 22}" text-anchor="middle" class="chart-node-label" fill="${accWrUnlocked ? 'var(--purple)' : '#a09da4'}">Max</text>
         <text x="${accWrX}" y="172" text-anchor="middle" class="chart-axis-label-main" fill="${accWrUnlocked ? 'var(--purple)' : '#a09da4'}">100%</text>
@@ -1936,14 +2020,14 @@ function renderResultCharts(apm, accuracy) {
 
       <!-- User Score Pin -->
       <g class="chart-user-node" opacity="0">
-        <circle cx="${userAccX}" cy="${userAccY}" r="9" fill="var(--green)" stroke="var(--paper)" stroke-width="3.5" />
-        <circle cx="${userAccX}" cy="${userAccY}" r="16" fill="var(--green)" opacity="0.25" class="chart-pulse-circle" style="transform-origin: ${userAccX}px ${userAccY}px;" />
+        <circle cx="${userAccX}" cy="${userAccY}" r="9" fill="var(--orange)" stroke="var(--paper)" stroke-width="3.5" />
+        <circle cx="${userAccX}" cy="${userAccY}" r="16" fill="var(--orange-soft)" opacity="0.25" class="chart-pulse-circle" style="transform-origin: ${userAccX}px ${userAccY}px;" />
         
         <!-- User Badge -->
         <g transform="translate(0, -6)">
           <rect x="${userAccX - 60}" y="${userAccY - 42}" width="120" height="30" rx="6" fill="var(--purple)" />
           <polygon points="${userAccX - 5},${userAccY - 12} ${userAccX + 5},${userAccY - 12} ${userAccX},${userAccY - 5}" fill="var(--purple)" />
-          <text x="${userAccX}" y="${userAccY - 22}" text-anchor="middle" font-size="15" font-family="Orbitron" fill="var(--green)" font-weight="700">${accuracy}%</text>
+          <text x="${userAccX}" y="${userAccY - 22}" text-anchor="middle" font-size="15" font-family="Orbitron" fill="var(--paper)" font-weight="700">${accuracy}%</text>
         </g>
       </g>
     </svg>
@@ -2339,15 +2423,11 @@ if (couponEl) {
       navigator.clipboard.writeText(couponEl.textContent.trim()).then(() => {
         const originalText = couponEl.textContent;
         couponEl.textContent = "GEKOPIEERD!";
-        couponEl.style.background = "var(--green)";
-        couponEl.style.color = "var(--purple)";
-        couponEl.style.borderColor = "var(--green)";
+        couponEl.classList.add("copied");
 
         setTimeout(() => {
           couponEl.textContent = originalText;
-          couponEl.style.background = "";
-          couponEl.style.color = "";
-          couponEl.style.borderColor = "";
+          couponEl.classList.remove("copied");
         }, 1500);
       }).catch(err => {
         console.error("Failed to copy text: ", err);
