@@ -3707,8 +3707,8 @@ body.is-dragging-handle * {
 }
 
 .poster-container {
-  width: 60%;
-  min-width: 240px;
+  width: 45%;
+  min-width: 180px;
   max-width: 100%;
   aspect-ratio: 3 / 2;
   background-size: cover;
@@ -3826,7 +3826,7 @@ body.is-dragging-handle * {
   font-size: 1.5rem;
   line-height: 1.75;
   padding: 0;
-  height: 140px;
+  height: 200px;
   white-space: pre-wrap;
   user-select: none;
   overflow-y: auto;

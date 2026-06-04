@@ -303,7 +303,10 @@ let calibrationComplete = false;
 // ═══════════════════════════════════════════════════════════════════
 // DOM ELEMENTS
 // ═══════════════════════════════════════════════════════════════════
-const testSelector = document.querySelector("#testSelector");
+const testSelectorDropdown = document.querySelector("#testSelectorDropdown");
+const testSelectorHeader = document.querySelector("#testSelectorHeader");
+const currentTestDisplay = document.querySelector("#currentTestDisplay");
+const testSelectorOptions = document.querySelectorAll("#testSelectorDropdown .dropdown-list li");
 const missionStage = document.querySelector("#missionStage");
 const morphFlash = document.querySelector("#morphFlash");
 
@@ -585,25 +588,9 @@ function getRollingApm() {
 
 function checkCalibration() {
   if (calibrationComplete || selectedDifficulty !== "dynamic") return;
-  const typed = getActiveTypingInput().value;
-  if (typed.length >= firstSentenceLength) {
+  const typed = getActiveTypingInput().value.length;
+  if (typed >= firstSentenceLength) {
     calibrationComplete = true;
-    const stats = getTypedStats(3);
-    const apm = stats.apm;
-    
-    // Scramble existing words to update pool based on calibration APM
-    if (targetWords.length > 0) {
-      const typedWords = typed.split(/\s+/).filter(w => w);
-      if (typedWords.length < targetWords.length) {
-        targetWords = targetWords.slice(0, typedWords.length + 1);
-        targetText = targetWords.join(" ");
-      } else {
-        targetWords = typedWords;
-        targetText = targetWords.join(" ");
-      }
-      appendAdaptiveSentences(2);
-      showLevelChange(currentDifficultyLabel, "up");
-    }
   }
 }
 
@@ -887,10 +874,14 @@ function resetTest() {
   if (briefingVideo) {
     briefingVideo.pause();
     clearVideoGlitch(briefingVideo.closest(".briefing-avatar-hud"));
+    const briefingHud = briefingVideo.closest(".briefing-avatar-hud");
+    if (briefingHud) briefingHud.classList.remove("video-active", "video-playing", "video-paused");
   }
   if (endBriefingVideo) {
     endBriefingVideo.pause();
     clearVideoGlitch(endBriefingVideo.closest(".briefing-avatar-hud"));
+    const endBriefingHud = endBriefingVideo.closest(".briefing-avatar-hud");
+    if (endBriefingHud) endBriefingHud.classList.remove("video-active", "video-playing", "video-paused");
   }
 
   const tooltip = document.getElementById("chart-tooltip");
@@ -899,6 +890,10 @@ function resetTest() {
   paused = false;
   pauseStartTime = 0;
   totalPausedTime = 0;
+  if (playBriefingButton) {
+    playBriefingButton.innerHTML = '<span aria-hidden="true">&#9658;</span> Start briefing';
+    playBriefingButton.disabled = false;
+  }
   clearInterval(timerId);
 
   TOTAL_SECONDS = TOTAL_SECONDS_MAP[currentTest];
@@ -1236,8 +1231,10 @@ function startEndBriefing() {
   currentEndStorySlideIndex = -1;
 
   if (endBriefingVideo) {
+    const endBriefingHud = endBriefingVideo.closest(".briefing-avatar-hud");
+    if (endBriefingHud) endBriefingHud.classList.add("video-active");
     endBriefingVideo.currentTime = 0;
-    endBriefingVideo.muted = false;
+    endBriefingVideo.muted = !soundEnabled;
     endBriefingVideo.volume = 1.0;
     triggerVideoGlitch(endBriefingVideo.closest(".briefing-avatar-hud"), () => {
       if (endBriefingPlaying) {
@@ -1791,8 +1788,7 @@ function startBriefing() {
   }
   beginMissionButton.disabled = false;
   beginMissionButton.textContent = "Sla briefing over";
-  playBriefingButton.disabled = true;
-  playBriefingButton.textContent = "Miss J spreekt...";
+  // Button text/state managed by video play event listener
   playStartSound();
   clearTimeout(storyTimeoutId);
 
@@ -1801,8 +1797,10 @@ function startBriefing() {
   currentStorySlideIndex = -1;
 
   if (briefingVideo) {
+    const briefingHud = briefingVideo.closest(".briefing-avatar-hud");
+    if (briefingHud) briefingHud.classList.add("video-active");
     briefingVideo.currentTime = 0;
-    briefingVideo.muted = false;
+    briefingVideo.muted = !soundEnabled;
     briefingVideo.volume = 1.0;
     triggerVideoGlitch(briefingVideo.closest(".briefing-avatar-hud"), () => {
       if (briefingPlaying) {
@@ -1822,6 +1820,8 @@ function completeOnboarding({ startImmediately = false } = {}) {
   if (briefingVideo) {
     briefingVideo.pause();
     clearVideoGlitch(briefingVideo.closest(".briefing-avatar-hud"));
+    const briefingHud = briefingVideo.closest(".briefing-avatar-hud");
+    if (briefingHud) briefingHud.classList.remove("video-active", "video-playing", "video-paused");
   }
 
   onboardingComplete = true;
@@ -2038,6 +2038,16 @@ function switchTest(testType) {
   currentTest = testType;
   TOTAL_SECONDS = TOTAL_SECONDS_MAP[currentTest];
 
+  // Sync Custom Dropdown UI
+  if (testSelectorDropdown) {
+    const activeOption = Array.from(testSelectorOptions).find(opt => opt.getAttribute("data-val") === testType);
+    if (activeOption) {
+      testSelectorOptions.forEach(opt => opt.classList.remove("selected"));
+      activeOption.classList.add("selected");
+      if (currentTestDisplay) currentTestDisplay.textContent = activeOption.textContent;
+    }
+  }
+
   // Set the body class
   document.body.className = `theme-${testType}`;
 
@@ -2069,9 +2079,29 @@ function switchTest(testType) {
   resetTest();
 }
 
-if (testSelector) {
-  testSelector.addEventListener("change", (e) => {
-    switchTest(e.target.value);
+if (testSelectorHeader && testSelectorDropdown) {
+  testSelectorHeader.addEventListener("click", (e) => {
+    if (running) return;
+    testSelectorDropdown.classList.toggle("open");
+    e.stopPropagation();
+  });
+
+  testSelectorOptions.forEach(option => {
+    option.addEventListener("click", () => {
+      if (running) return;
+      
+      const testVal = option.getAttribute("data-val");
+      
+      testSelectorOptions.forEach(opt => opt.classList.remove("selected"));
+      option.classList.add("selected");
+      
+      if (currentTestDisplay) {
+        currentTestDisplay.textContent = option.textContent;
+      }
+      
+      testSelectorDropdown.classList.remove("open");
+      switchTest(testVal);
+    });
   });
 }
 
@@ -2098,10 +2128,6 @@ allInputs.forEach(input => {
     updateLiveStats();
     playKeySound(isCorrect);
 
-    if (currentTest !== "normal") {
-      const progress = (typed.length / targetText.length) * 100;
-      setProgress(progress);
-    }
 
     if (isCorrect && typed[lastIndex] === ' ') {
       if (currentTest === "kluis") {
@@ -2214,7 +2240,19 @@ retryResultButton.addEventListener("click", () => {
   });
 });
 
-playBriefingButton.addEventListener("click", startBriefing);
+playBriefingButton.addEventListener("click", () => {
+  if (!briefingPlaying) {
+    startBriefing();
+  } else {
+    if (briefingVideo) {
+      if (briefingVideo.paused) {
+        briefingVideo.play().catch(err => console.warn("Video play failed:", err));
+      } else {
+        briefingVideo.pause();
+      }
+    }
+  }
+});
 beginMissionButton.addEventListener("click", () => completeOnboarding({ startImmediately: true }));
 
 if (skipEndBriefingButton) {
@@ -2265,6 +2303,13 @@ soundToggles.forEach(st => {
         : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>';
     });
 
+    if (briefingVideo) {
+      briefingVideo.muted = !soundEnabled;
+    }
+    if (endBriefingVideo) {
+      endBriefingVideo.muted = !soundEnabled;
+    }
+
     if (soundEnabled) {
       createAudioContext();
       playTone(520, 0.06, 0, "triangle");
@@ -2282,6 +2327,80 @@ if (posterContainer) {
     }
   });
 }
+
+// Video play/pause toggle controls and state synchronization
+function setupVideoControls(video, overlaySelector) {
+  if (!video) return;
+  const hud = video.closest(".briefing-avatar-hud");
+  const overlay = hud ? hud.querySelector(overlaySelector) : null;
+  
+  const togglePlay = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (video === briefingVideo) {
+      if (!briefingPlaying) {
+        startBriefing();
+        return;
+      }
+      if (video.paused) {
+        video.play().catch(err => console.warn("Video play failed:", err));
+      } else {
+        video.pause();
+      }
+    } else if (video === endBriefingVideo) {
+      if (!endBriefingPlaying) return;
+      if (video.paused) {
+        video.play().catch(err => console.warn("Video play failed:", err));
+      } else {
+        video.pause();
+      }
+    }
+  };
+  
+  video.addEventListener("click", togglePlay);
+  if (overlay) {
+    overlay.addEventListener("click", togglePlay);
+  }
+  
+  if (hud) {
+    // Sync classes on start and when play/pause events fire
+    if (video.paused) {
+      hud.classList.add("video-paused");
+      hud.classList.remove("video-playing");
+    } else {
+      hud.classList.add("video-playing");
+      hud.classList.remove("video-paused");
+    }
+    
+    video.addEventListener("play", () => {
+      hud.classList.remove("video-paused");
+      hud.classList.add("video-playing");
+      if (video === briefingVideo) {
+        playBriefingButton.innerHTML = '<span aria-hidden="true">&#9208;</span> Pauzeer briefing';
+        playBriefingButton.disabled = false;
+      }
+    });
+    video.addEventListener("pause", () => {
+      hud.classList.remove("video-playing");
+      hud.classList.add("video-paused");
+      if (video === briefingVideo) {
+        playBriefingButton.innerHTML = '<span aria-hidden="true">&#9658;</span> Hervat briefing';
+        playBriefingButton.disabled = false;
+      }
+    });
+    video.addEventListener("ended", () => {
+      hud.classList.remove("video-playing", "video-paused");
+      if (video === briefingVideo) {
+        playBriefingButton.textContent = "Briefing voltooid";
+        playBriefingButton.disabled = false;
+      }
+    });
+  }
+}
+
+setupVideoControls(briefingVideo, ".video-hover-overlay");
+setupVideoControls(endBriefingVideo, ".video-hover-overlay");
 
 // ═══════════════════════════════════════════════════════════════════
 // OTHER INTERACTIVE BEHAVIORS
@@ -2550,6 +2669,9 @@ difficultyDropdowns.forEach(dd => {
 
 document.addEventListener("click", () => {
   difficultyDropdowns.forEach(dd => dd.classList.remove("open"));
+  if (testSelectorDropdown) {
+    testSelectorDropdown.classList.remove("open");
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════
@@ -2674,19 +2796,22 @@ function renderResultCharts(apm, accuracy) {
   const userAccY = getApmY(userAccX);
   const accTargetX = 230;
   const accTargetY = getApmY(accTargetX);
+  const accAverageX = 370;
+  const accAverageY = getApmY(accAverageX);
   const accWrX = 550;
   const accWrY = getApmY(accWrX);
+  const accWrUnlocked = accuracy >= 97;
 
   // 4. Generate Accuracy SVG
   const accuracySvg = `
     <svg viewBox="0 0 600 200" class="spy-svg-chart">
       <defs>
         <linearGradient id="accGlowGrad" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stop-color="var(--blue)" />
-          <stop offset="100%" stop-color="var(--purple-soft)" />
+          <stop offset="0%" stop-color="var(--purple)" />
+          <stop offset="100%" stop-color="var(--orange-soft)" />
         </linearGradient>
         <filter id="accShadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="var(--blue)" flood-opacity="0.4"/>
+          <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="var(--purple-soft)" flood-opacity="0.3"/>
         </filter>
       </defs>
       
@@ -2703,40 +2828,49 @@ function renderResultCharts(apm, accuracy) {
 
       <!-- Target lines -->
       <line x1="${accTargetX}" y1="${accTargetY}" x2="${accTargetX}" y2="150" stroke="rgba(59, 7, 51, 0.35)" stroke-dasharray="3,3" />
+      <line x1="${accAverageX}" y1="${accAverageY}" x2="${accAverageX}" y2="150" stroke="rgba(59, 7, 51, 0.35)" stroke-dasharray="3,3" />
       <line x1="${accWrX}" y1="${accWrY}" x2="${accWrX}" y2="150" stroke="rgba(59, 7, 51, 0.35)" stroke-dasharray="3,3" />
 
       <!-- User Pin vertical line -->
-      <line x1="${userAccX}" y1="150" x2="${userAccX}" y2="${userAccY}" class="chart-user-line" stroke="var(--blue)" stroke-width="2" stroke-dasharray="3,3" opacity="0" />
+      <line x1="${userAccX}" y1="150" x2="${userAccX}" y2="${userAccY}" class="chart-user-line" stroke="var(--purple)" stroke-width="2" stroke-dasharray="3,3" opacity="0" />
 
       <!-- Colored Progress Path -->
       <path d="${generateCurvePath(30, userAccX)}" fill="none" stroke="url(#accGlowGrad)" stroke-width="6" stroke-linecap="round" class="chart-progress-path" filter="url(#accShadow)" />
 
       <!-- Benchmark Nodes -->
-      <g class="chart-node-group" data-tooltip="Gemiddelde: De gemiddelde precisie van onze beginnende cursisten (85%).">
-        <circle cx="${accTargetX}" cy="${accTargetY}" r="7" fill="var(--paper)" stroke="var(--blue)" stroke-width="3.5" />
+      <g class="chart-node-group" data-tooltip="Diploma: De minimale precisie die vereist is om te slagen (97%).">
+        <circle cx="${accTargetX}" cy="${accTargetY}" r="7" fill="var(--paper)" stroke="var(--orange)" stroke-width="3.5" />
         <circle cx="${accTargetX}" cy="${accTargetY}" r="22" fill="transparent" class="node-hover-hitbox" style="cursor: pointer;" />
-        <text x="${accTargetX}" y="${accTargetY + 22}" text-anchor="middle" class="chart-node-label" fill="var(--purple)">Startniveau</text>
-        <text x="${accTargetX}" y="172" text-anchor="middle" class="chart-axis-label-main">85%</text>
-        <text x="${accTargetX}" y="188" text-anchor="middle" class="chart-axis-label-sub">precisie</text>
+        <text x="${accTargetX}" y="${accTargetY + 22}" text-anchor="middle" class="chart-node-label" fill="var(--purple)">Diploma</text>
+        <text x="${accTargetX}" y="172" text-anchor="middle" class="chart-axis-label-main">97%</text>
+        <text x="${accTargetX}" y="188" text-anchor="middle" class="chart-axis-label-sub">Precisie</text>
       </g>
 
-      <g class="chart-node-group" data-tooltip="Doel: Foutloos blindtypen (99%+). Dit behaal je met de TypeMission-methode!">
-        <circle cx="${accWrX}" cy="${accWrY}" r="7" fill="var(--paper)" stroke="var(--orange)" stroke-width="3.5" />
+      <g class="chart-node-group" data-tooltip="Gemiddelde: De gemiddelde precisie van geslaagde cursisten (99%).">
+        <circle cx="${accAverageX}" cy="${accAverageY}" r="7" fill="var(--paper)" stroke="var(--blue)" stroke-width="3.5" />
+        <circle cx="${accAverageX}" cy="${accAverageY}" r="22" fill="transparent" class="node-hover-hitbox" style="cursor: pointer;" />
+        <text x="${accAverageX}" y="${accAverageY + 22}" text-anchor="middle" class="chart-node-label" fill="var(--purple)">Gemiddelde</text>
+        <text x="${accAverageX}" y="172" text-anchor="middle" class="chart-axis-label-main">99%</text>
+        <text x="${accAverageX}" y="188" text-anchor="middle" class="chart-axis-label-sub">Precisie</text>
+      </g>
+
+      <g class="chart-node-group" data-tooltip="Max: De maximale score van 100% foutloze precisie.">
+        <circle cx="${accWrX}" cy="${accWrY}" r="7" fill="${accWrUnlocked ? 'var(--paper)' : '#dcdce2'}" stroke="${accWrUnlocked ? 'var(--orange)' : '#a09da4'}" stroke-width="3.5" />
         <circle cx="${accWrX}" cy="${accWrY}" r="22" fill="transparent" class="node-hover-hitbox" style="cursor: pointer;" />
-        <text x="${accWrX}" y="${accWrY + 22}" text-anchor="middle" class="chart-node-label" fill="var(--purple)">Doel</text>
-        <text x="${accWrX}" y="172" text-anchor="middle" class="chart-axis-label-main">99%</text>
-        <text x="${accWrX}" y="188" text-anchor="middle" class="chart-axis-label-sub">precisie</text>
+        <text x="${accWrX}" y="${accWrY + 22}" text-anchor="middle" class="chart-node-label" fill="${accWrUnlocked ? 'var(--purple)' : '#a09da4'}">Max</text>
+        <text x="${accWrX}" y="172" text-anchor="middle" class="chart-axis-label-main" fill="${accWrUnlocked ? 'var(--purple)' : '#a09da4'}">100%</text>
+        <text x="${accWrX}" y="188" text-anchor="middle" class="chart-axis-label-sub" fill="${accWrUnlocked ? 'var(--muted)' : '#a09da4'}">Precisie</text>
       </g>
 
       <!-- User Score Pin -->
       <g class="chart-user-node" opacity="0">
-        <circle cx="${userAccX}" cy="${userAccY}" r="9" fill="var(--blue)" stroke="var(--paper)" stroke-width="3.5" />
-        <circle cx="${userAccX}" cy="${userAccY}" r="16" fill="var(--blue)" opacity="0.25" class="chart-pulse-circle" style="transform-origin: ${userAccX}px ${userAccY}px;" />
+        <circle cx="${userAccX}" cy="${userAccY}" r="9" fill="var(--orange)" stroke="var(--paper)" stroke-width="3.5" />
+        <circle cx="${userAccX}" cy="${userAccY}" r="16" fill="var(--orange-soft)" opacity="0.25" class="chart-pulse-circle" style="transform-origin: ${userAccX}px ${userAccY}px;" />
         
         <g transform="translate(0, -6)">
           <rect x="${userAccX - 60}" y="${userAccY - 42}" width="120" height="30" rx="6" fill="var(--purple)" />
           <polygon points="${userAccX - 5},${userAccY - 12} ${userAccX + 5},${userAccY - 12} ${userAccX},${userAccY - 5}" fill="var(--purple)" />
-          <text x="${userAccX}" y="${userAccY - 22}" text-anchor="middle" font-size="15" font-family="Orbitron" fill="var(--paper)" font-weight="700">${accuracy}% netheid</text>
+          <text x="${userAccX}" y="${userAccY - 22}" text-anchor="middle" font-size="15" font-family="Orbitron" fill="var(--paper)" font-weight="700">${accuracy}%</text>
         </g>
       </g>
     </svg>
@@ -2769,41 +2903,41 @@ function renderResultCharts(apm, accuracy) {
 }
 
 function generateCurvePath(startX, endX) {
-  const points = [];
-  const steps = 18;
-  for (let i = 0; i <= steps; i++) {
+  let pathStr = `M ${startX},${getApmY(startX).toFixed(1)}`;
+  const steps = 30;
+  for (let i = 1; i <= steps; i++) {
     const x = startX + (i / steps) * (endX - startX);
     const y = getApmY(x);
-    points.push({ x, y });
+    pathStr += ` L ${x.toFixed(1)},${y.toFixed(1)}`;
   }
-  let path = `M ${points[0].x} ${points[0].y}`;
-  for (let i = 0; i < points.length - 1; i++) {
-    const xc = (points[i].x + points[i + 1].x) / 2;
-    const yc = (points[i].y + points[i + 1].y) / 2;
-    path += ` Q ${points[i].x} ${points[i].y}, ${xc} ${yc}`;
-  }
-  path += ` L ${points[points.length - 1].x} ${points[points.length - 1].y}`;
-  return path;
+  return pathStr;
 }
 
 function getApmY(x) {
-  return 150 - 100 * Math.sin((x - 30) / 360 * Math.PI) - 15 * Math.sin((x - 30) / 90 * Math.PI);
+  const t = (x - 30) / 520;
+  return 150 - (t * (2 - t)) * 125;
 }
 
-function getApmX(apm) {
-  if (apm <= 30) return 30;
-  if (apm >= 350) return 550;
-  // Map 30-350 range linearly to 30-550 coords
-  const ratio = (apm - 30) / (350 - 30);
-  return 30 + ratio * 520;
+function getApmX(val) {
+  if (val <= 120) {
+    return 30 + (Math.max(0, val) / 120) * 200;
+  } else if (val <= 167) {
+    return 230 + ((val - 120) / (167 - 120)) * 140;
+  } else {
+    return 370 + (Math.min(800, val - 167) / (800 - 167)) * 180;
+  }
 }
 
-function getAccX(accuracy) {
-  if (accuracy <= 40) return 30;
-  if (accuracy >= 100) return 550;
-  // Map 40%-100% range linearly to 30-550 coords
-  const ratio = (accuracy - 40) / (100 - 40);
-  return 30 + ratio * 520;
+function getAccX(val) {
+  const minAcc = 75;
+  if (val <= 97) {
+    const pct = Math.max(0, (val - minAcc) / (97 - minAcc));
+    return 30 + pct * 200;
+  } else if (val <= 99) {
+    return 230 + ((val - 97) / (99 - 97)) * 140;
+  } else {
+    return 370 + ((val - 99) / (100 - 99)) * 180;
+  }
 }
 
 function setupBenchmarkTooltips() {
