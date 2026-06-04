@@ -16,7 +16,7 @@
   --line: #e5deea;
   --paper: #ffffff;
   --off-white: #f4f4f4;
-  --shadow: rgba(59, 7, 51, 0.18);
+  --shadow: rgba(59, 7, 51, 0.08);
 }
 
 * {
@@ -362,8 +362,12 @@ h3 {
 
 .mission-stage {
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   border-radius: 20px;
+}
+
+.mission-stage.is-transitioning {
+  overflow: hidden;
 }
 
 .mission-stage.is-transitioning .mission-view {
@@ -884,7 +888,7 @@ h3 {
   padding: 24px;
   background: #fdfdfd;
   color: #b0aab3;
-  font-size: 1.15rem;
+  font-size: 1.4rem;
   line-height: 1.7;
   font-family: "Roboto Mono", "Courier New", monospace;
   user-select: none;

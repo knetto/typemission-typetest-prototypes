@@ -520,8 +520,12 @@ h3 {
 
 .mission-stage {
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   border-radius: 20px;
+}
+
+.mission-stage.is-transitioning {
+  overflow: hidden;
 }
 
 .mission-stage.is-transitioning .mission-view {
@@ -1302,7 +1306,7 @@ h3 {
   border: 4px solid #4a4a5a;
   box-shadow:
     inset 0 2px 8px rgba(0, 0, 0, 0.4),
-    0 12px 40px rgba(0, 0, 0, 0.3),
+    0 12px 40px rgba(0, 0, 0, 0.15),
     0 0 0 2px rgba(255, 255, 255, 0.05);
   transition: border-color 0.4s ease, box-shadow 0.4s ease;
   transform: translateZ(20px);
@@ -1603,7 +1607,7 @@ body.is-dragging-handle * {
   padding: 16px;
   background: #0d0d18;
   color: #dbdee9;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   line-height: 1.75;
   font-family: "Roboto Mono", "Courier New", monospace;
   user-select: none;
@@ -1712,7 +1716,7 @@ body.is-dragging-handle * {
 /* Vault cracked state */
 .vault-door.cracked .vault-frame {
   border-color: var(--green);
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4), 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 30px rgba(154, 215, 68, 0.3);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4), 0 12px 40px rgba(0, 0, 0, 0.15), 0 0 30px rgba(154, 215, 68, 0.3);
 }
 
 /* Stats row */
@@ -3610,7 +3614,7 @@ body.is-dragging-handle * {
 
 .classified-doc.manila-folder {
   background: linear-gradient(135deg, #e5d4b3 0%, #ccb78d 100%);
-  border-radius: 4px 12px 12px 12px;
+  border-radius: 0 12px 12px 12px;
   border: 1px solid #bba377;
   padding: 0;
   overflow: visible;
@@ -3623,7 +3627,7 @@ body.is-dragging-handle * {
 .folder-tab {
   position: absolute;
   top: -30px;
-  right: 40px;
+  left: -1px;
   background: #e5d4b3;
   padding: 6px 20px;
   border-radius: 8px 8px 0 0;
@@ -3819,7 +3823,7 @@ body.is-dragging-handle * {
   color: #111;
   font-family: "Roboto Mono", "Courier New", monospace;
   font-weight: 500;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   line-height: 1.75;
   padding: 0;
   height: 140px;

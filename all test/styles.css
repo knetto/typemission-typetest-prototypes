@@ -520,8 +520,12 @@ h3 {
 
 .mission-stage {
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   border-radius: 20px;
+}
+
+.mission-stage.is-transitioning {
+  overflow: hidden;
 }
 
 .mission-stage.is-transitioning .mission-view {
@@ -907,6 +911,8 @@ body.theme-dossier #missionLayout,
 
 .vault-console,
 .dossier-console {
+  position: relative;
+  z-index: 1;
   padding: 24px;
   background: var(--paper);
 }
@@ -1307,7 +1313,7 @@ body.theme-dossier #missionLayout,
   border: 4px solid #4a4a5a;
   box-shadow:
     inset 0 2px 8px rgba(0, 0, 0, 0.4),
-    0 12px 40px rgba(0, 0, 0, 0.3),
+    0 12px 40px rgba(0, 0, 0, 0.15),
     0 0 0 2px rgba(255, 255, 255, 0.05);
   transition: border-color 0.4s ease, box-shadow 0.4s ease;
   transform: translateZ(20px);
@@ -1608,7 +1614,7 @@ body.is-dragging-handle * {
   padding: 16px;
   background: #0d0d18;
   color: #dbdee9;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   line-height: 1.75;
   font-family: "Roboto Mono", "Courier New", monospace;
   user-select: none;
@@ -1717,7 +1723,7 @@ body.is-dragging-handle * {
 /* Vault cracked state */
 .vault-door.cracked .vault-frame {
   border-color: var(--green);
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4), 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 30px rgba(154, 215, 68, 0.3);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4), 0 12px 40px rgba(0, 0, 0, 0.15), 0 0 30px rgba(154, 215, 68, 0.3);
 }
 
 /* Stats row */
@@ -1963,6 +1969,7 @@ body.is-dragging-handle * {
   flex-wrap: wrap;
   gap: 12px;
   margin-top: 18px;
+  padding: 0;
 }
 
 .primary-button,
@@ -2980,6 +2987,11 @@ body.is-dragging-handle * {
     grid-template-columns: 1fr;
   }
 
+  .actions {
+    padding: 0;
+  }
+
+  #normalConsoleWrapper .typing-console,
   .vault-console,
   .dossier-console {
     padding: 16px;
@@ -3615,7 +3627,7 @@ body.is-dragging-handle * {
 
 .classified-doc.manila-folder {
   background: linear-gradient(135deg, #e5d4b3 0%, #ccb78d 100%);
-  border-radius: 4px 12px 12px 12px;
+  border-radius: 0 12px 12px 12px;
   border: 1px solid #bba377;
   padding: 0;
   overflow: visible;
@@ -3628,7 +3640,7 @@ body.is-dragging-handle * {
 .folder-tab {
   position: absolute;
   top: -30px;
-  right: 40px;
+  left: -1px;
   background: #e5d4b3;
   padding: 6px 20px;
   border-radius: 8px 8px 0 0;
@@ -3824,7 +3836,7 @@ body.is-dragging-handle * {
   color: #111;
   font-family: "Roboto Mono", "Courier New", monospace;
   font-weight: 500;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   line-height: 1.75;
   padding: 0;
   height: 140px;
@@ -4238,6 +4250,11 @@ body.theme-dossier .lead-kluis {
 }
 
 #normalConsoleWrapper .typing-console {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   padding: 24px;
   background: var(--paper);
   border-radius: 10px;
@@ -4264,6 +4281,7 @@ body.theme-dossier .lead-kluis {
   height: 14px;
   border-radius: 999px;
   background: #f1f0f4;
+  margin: 0 14px;
 }
 
 #normalConsoleWrapper .normal-upload-fill {
@@ -4311,16 +4329,80 @@ body.theme-dossier .lead-kluis {
   box-shadow: 0 6px 24px rgba(59, 7, 51, 0.12);
 }
 
+#normalConsoleWrapper .prompt-header {
+  min-height: 46px;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: #2b0626;
+  color: var(--paper);
+  font-family: "Orbitron", "Segoe UI", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+#normalConsoleWrapper .prompt-container {
+  position: relative;
+  cursor: text;
+}
+
 #normalConsoleWrapper .normal-prompt-text {
   min-height: 160px;
   padding: 24px;
   background: #fdfdfd;
   color: #b0aab3;
-  font-size: 1.15rem;
+  font-size: 1.4rem;
   line-height: 1.7;
   font-family: "Roboto Mono", "Courier New", monospace;
   user-select: none;
   white-space: pre-wrap;
+}
+
+/* Legible character and cursor styling for the Standaard (normal) test on light background */
+#normalConsoleWrapper .normal-prompt-text .char.correct {
+  color: var(--text);
+}
+
+#normalConsoleWrapper .normal-prompt-text .char.current {
+  color: var(--purple);
+}
+
+#normalConsoleWrapper .normal-prompt-text .char.current::before {
+  content: "";
+  position: absolute;
+  left: 0px;
+  top: 10%;
+  bottom: 10%;
+  width: 2.5px;
+  background: var(--orange);
+  border-radius: 2px;
+  animation: cursorPulse 1s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(228, 142, 53, 0.6);
+  z-index: 2;
+}
+
+#normalConsoleWrapper .normal-prompt-text .char.wrong.current {
+  color: #e85d75;
+  background: transparent;
+}
+
+#normalConsoleWrapper .normal-prompt-text .char.wrong.current::before {
+  background: #e85d75;
+  box-shadow: 0 0 8px rgba(232, 93, 117, 0.6);
+}
+
+#normalConsoleWrapper .normal-prompt-text .char.case-error.current {
+  color: var(--orange);
+  background: transparent;
+}
+
+#normalConsoleWrapper .normal-prompt-text .char.case-error.current::before {
+  background: var(--orange);
+  box-shadow: 0 0 8px rgba(228, 142, 53, 0.6);
 }
 
 #normalConsoleWrapper .normal-typing-overlay {

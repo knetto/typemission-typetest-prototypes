@@ -1,4 +1,4 @@
-const TOTAL_SECONDS = 1;
+const TOTAL_SECONDS = 60;
 const INITIAL_WORDS = 14;
 const WORD_BATCH = 9;
 const BUFFER_CHARS = 50;

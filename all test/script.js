@@ -3,8 +3,8 @@
 // ═══════════════════════════════════════════════════════════════════
 const TOTAL_SECONDS_MAP = {
   normal: 60,
-  kluis: 1,      // Keep at 1s for quick testing, change to 60 for play
-  dossier: 1     // Keep at 1s for quick testing, change to 60 for play
+  kluis: 60,
+  dossier: 60
 };
 
 const INITIAL_WORDS = 14;
@@ -801,7 +801,7 @@ function isAllowedInput(data) {
   if (!data) return false;
 
   for (let i = 0; i < data.length; i += 1) {
-    if (data[i] !== targetText[typedLength + i]) {
+    if (!charsMatch(data[i], targetText[typedLength + i])) {
       return false;
     }
   }
@@ -2083,7 +2083,61 @@ const allInputs = document.querySelectorAll(".typingInput");
 allInputs.forEach(input => {
   input.addEventListener("input", (event) => {
     if (input !== getActiveTypingInput()) return;
+    if (!canAcceptTyping()) return;
+
+    if (!running) beginTimer();
+
+    const typed = input.value;
+    const lastIndex = typed.length - 1;
+    const isCorrect = lastIndex < 0 || charsMatch(typed[lastIndex], targetText[lastIndex]);
+
+    mistakeIndex = -1;
+    const finalTargetVisible = Math.max(INITIAL_VISIBLE_CHARS, typed.length + BUFFER_CHARS);
+    ensureTargetLength(finalTargetVisible + 40);
+    renderPrompt();
+    updateLiveStats();
+    playKeySound(isCorrect);
+
+    if (currentTest !== "normal") {
+      const progress = (typed.length / targetText.length) * 100;
+      setProgress(progress);
+    }
+
+    if (isCorrect && typed[lastIndex] === ' ') {
+      if (currentTest === "kluis") {
+        dialRotation += 15;
+        if (vaultDial) {
+          vaultDial.animate([
+            { transform: `rotate(${dialRotation - 15}deg)` },
+            { transform: `rotate(${dialRotation + 4}deg)`, offset: 0.43 },
+            { transform: `rotate(${dialRotation}deg)` }
+          ], {
+            duration: 140,
+            easing: "ease-out",
+            fill: "forwards"
+          });
+        }
+      }
+    }
+
+    const wasCalibrated = calibrationComplete;
     checkCalibration();
+
+    if (!wasCalibrated && calibrationComplete) {
+      if (selectedDifficulty === "dynamic") {
+        const typedLen = input.value.length;
+        const searchFrom = typedLen;
+        const afterTyped = targetText.substring(searchFrom);
+        const match = afterTyped.match(/[.?!]["']?\s/);
+        if (match) {
+          const breakPoint = searchFrom + match.index + match[0].length;
+          targetText = targetText.slice(0, breakPoint).trimEnd();
+          targetWords = targetText.split(/\s+/).filter(w => w);
+        }
+        appendAdaptiveSentences(2);
+        showLevelChange(currentDifficultyLabel, "up");
+      }
+    }
   });
 
   input.addEventListener("beforeinput", (event) => {
