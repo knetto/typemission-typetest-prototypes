@@ -2708,7 +2708,7 @@ function renderResultCharts(apm, accuracy) {
   // 1. Calculate APM layout coordinates
   const userApmX = getApmX(apm);
   const userApmY = getApmY(userApmX);
-  const apmTargetX = 230;
+  const apmTargetX = 310;
   const apmTargetY = getApmY(apmTargetX);
   const apmAverageX = 370;
   const apmAverageY = getApmY(apmAverageX);
@@ -2794,7 +2794,7 @@ function renderResultCharts(apm, accuracy) {
   // 3. Calculate Accuracy coordinates
   const userAccX = getAccX(accuracy);
   const userAccY = getApmY(userAccX);
-  const accTargetX = 230;
+  const accTargetX = 310;
   const accTargetY = getApmY(accTargetX);
   const accAverageX = 370;
   const accAverageY = getApmY(accAverageX);
@@ -2915,14 +2915,14 @@ function generateCurvePath(startX, endX) {
 
 function getApmY(x) {
   const t = (x - 30) / 520;
-  return 150 - (t * (2 - t)) * 125;
+  return 150 - (t * (2 - t)) * 140;
 }
 
 function getApmX(val) {
   if (val <= 120) {
-    return 30 + (Math.max(0, val) / 120) * 200;
+    return 30 + (Math.max(0, val) / 120) * 280;
   } else if (val <= 167) {
-    return 230 + ((val - 120) / (167 - 120)) * 140;
+    return 310 + ((val - 120) / (167 - 120)) * 60;
   } else {
     return 370 + (Math.min(800, val - 167) / (800 - 167)) * 180;
   }
@@ -2932,9 +2932,9 @@ function getAccX(val) {
   const minAcc = 75;
   if (val <= 97) {
     const pct = Math.max(0, (val - minAcc) / (97 - minAcc));
-    return 30 + pct * 200;
+    return 30 + pct * 280;
   } else if (val <= 99) {
-    return 230 + ((val - 97) / (99 - 97)) * 140;
+    return 310 + ((val - 97) / (99 - 97)) * 60;
   } else {
     return 370 + ((val - 99) / (100 - 99)) * 180;
   }
