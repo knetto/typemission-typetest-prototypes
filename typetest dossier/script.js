@@ -1,4 +1,4 @@
-const TOTAL_SECONDS = 60;
+const TOTAL_SECONDS = 1;
 const INITIAL_WORDS = 14;
 const WORD_BATCH = 9;
 const BUFFER_CHARS = 50;
@@ -392,9 +392,14 @@ const morphFlash = document.querySelector("#morphFlash");
 const storyStage = document.querySelector("#storyStage");
 const missionLayout = document.querySelector("#missionLayout");
 const storyText = document.querySelector("#storyText");
-const storyProgress = document.querySelectorAll(".story-progress span");
+const storyProgress = document.querySelectorAll("#storyStage .story-progress span");
 const playBriefingButton = document.querySelector("#playBriefingButton");
 const beginMissionButton = document.querySelector("#beginMissionButton");
+const briefingVideo = document.querySelector("#briefingVideo");
+const endBriefingStage = document.querySelector("#endBriefingStage");
+const endBriefingVideo = document.querySelector("#endBriefingVideo");
+const endBriefingText = document.querySelector("#endBriefingText");
+const skipEndBriefingButton = document.querySelector("#skipEndBriefingButton");
 const startMissionHero = document.querySelector("#startMissionHero");
 const completeWpm = document.querySelector("#completeWpm");
 const completeAccuracy = document.querySelector("#completeAccuracy");
@@ -403,6 +408,7 @@ const completeCoins = document.querySelector("#completeCoins");
 const rankBadge = document.querySelector("#rankBadge");
 const unlockNote = document.querySelector("#unlockNote");
 const retryResultButton = document.querySelector("#retryResultButton");
+const startLiveBadge = document.querySelector("#startLiveBadge");
 
 // Dossier elements
 const classifiedDoc = document.querySelector("#classifiedDoc");
@@ -412,10 +418,22 @@ const codeStatus = document.querySelector("#codeStatus");
 const sections = [document.querySelector("#section1"), document.querySelector("#section2"), document.querySelector("#section3"), document.querySelector("#section4"), document.querySelector("#section5")];
 
 const storySlides = [
-  "Welkom bij de Super Spy School, rekruut! Ik ben Miss J.",
-  "Iedereen denkt dat een spion alleen gadgets en lasers gebruikt, maar ons belangrijkste wapen is het toetsenbord.",
-  "Of je nu een dossier ontcijfert of geheime codes verstuurt: je moet supersnel kunnen typen.",
-  "Als je te traag bent, gaat het alarm af en is je missie mislukt. Doe de test, dan kijk ik hoe snel jouw vingers zijn."
+  "Hallo, ik ben miss J.",
+  "Deze video heb ik opgenomen om nieuwe leerlingen te helpen bij het slagen van hun eerste test.",
+  "Als je slaagt, willen we je maar al te graag op onze school hebben, want we zijn altijd op zoek naar goede hulp.",
+  "Als je slaagt, krijg je les van mij. Dat zou heel leuk zijn.",
+  "Om te kijken of jij de aangewezen persoon bent om ons te helpen, heeft professor Qwerty hier een test voor gemaakt.",
+  "Succes!"
+];
+
+const endStorySlides = [
+  "Geweldig, je hebt het gehaald!",
+  "Dat is best knap hoor, gefeliciteerd!",
+  "Je bent nu officieel uitgenodigd om les te krijgen op de Super Spy School.",
+  "Ik hoop je snel te zien op onze school.",
+  "Misschien kom je wel bij mij in de klas, dat zou ik heel leuk vinden.",
+  "Dan kan ik je alle letters leren en dan kan ik je leren omgaan met spionnen gadgets, zodat je op je eerste echte spionnenmissie mag gaan.",
+  "Tot ziens en eh... hopelijk tot gauw!"
 ];
 
 let running = false;
@@ -531,7 +549,7 @@ function clearAnimatedStyles(element) {
 }
 
 function setViewImmediate(nextView) {
-  [storyStage, missionLayout, resultPanel].forEach((view) => {
+  [storyStage, missionLayout, endBriefingStage, resultPanel].forEach((view) => {
     const isActive = view === nextView;
     view.hidden = !isActive;
     view.classList.toggle("active", isActive);
@@ -542,7 +560,9 @@ function setViewImmediate(nextView) {
 }
 
 function transitionToView(nextView, onComplete) {
+  console.log("transitionToView called", { nextViewId: nextView ? nextView.id : "null", activeMissionViewId: activeMissionView ? activeMissionView.id : "null", viewTransitioning });
   if (viewTransitioning) {
+    console.log("transitionToView: viewTransitioning is true, queuing timeout");
     window.setTimeout(() => transitionToView(nextView, onComplete), 90);
     return;
   }
@@ -550,11 +570,13 @@ function transitionToView(nextView, onComplete) {
   const currentView = activeMissionView;
 
   if (currentView === nextView) {
+    console.log("transitionToView: currentView is already nextView, returning early");
     if (onComplete) onComplete();
     return;
   }
 
-  const currentHeight = currentView.offsetHeight;
+  const currentHeight = currentView ? currentView.offsetHeight : 0;
+  console.log("transitionToView: transitioning from", currentView ? currentView.id : "null", "to", nextView ? nextView.id : "null", "currentHeight:", currentHeight);
   viewTransitioning = true;
   missionStage.classList.add("is-transitioning");
 
@@ -637,12 +659,12 @@ function transitionToView(nextView, onComplete) {
   // Stagger animations for nextView child components
   if (!prefersReducedMotion) {
     if (nextView === missionLayout) {
-      const leftPanel = nextView.querySelector(".briefing-panel");
-      const rightPanel = nextView.querySelector(".dossier-console");
-      if (leftPanel) {
-        leftPanel.animate([
-          { opacity: 0, transform: "translateX(-40px) scale(0.96)" },
-          { opacity: 1, transform: "translateX(0) scale(1)" }
+      const consolePanel = nextView.querySelector(".dossier-console");
+      const gamesPanel = nextView.querySelector(".vault-games-footer");
+      if (consolePanel) {
+        consolePanel.animate([
+          { opacity: 0, transform: "translateY(30px) scale(0.98)" },
+          { opacity: 1, transform: "translateY(0) scale(1)" }
         ], {
           duration: 600,
           delay: 100,
@@ -650,70 +672,41 @@ function transitionToView(nextView, onComplete) {
           fill: "both"
         });
       }
-      if (rightPanel) {
-        rightPanel.animate([
-          { opacity: 0, transform: "translateX(40px) scale(0.96)" },
-          { opacity: 1, transform: "translateX(0) scale(1)" }
+      if (gamesPanel) {
+        gamesPanel.animate([
+          { opacity: 0, transform: "translateY(30px) scale(0.98)" },
+          { opacity: 1, transform: "translateY(0) scale(1)" }
         ], {
           duration: 600,
-          delay: 160,
+          delay: 200,
           easing: easingCurve,
           fill: "both"
         });
       }
     } else if (nextView === resultPanel) {
-      const summary = nextView.querySelector(".result-summary");
-      const copy = nextView.querySelector(".result-copy");
-      const cta = nextView.querySelector(".cta-box");
-      const potential = nextView.querySelector(".potential-card");
+      const headerRow = nextView.querySelector(".result-header-row");
+      const statsRow = nextView.querySelector(".complete-stats");
+      const chartsRow = nextView.querySelector(".result-charts-row");
+      const potentialCard = nextView.querySelector(".potential-card");
+      const actionsRow = nextView.querySelector(".result-actions-row");
+      const gamesFooter = nextView.querySelector(".vault-games-footer");
 
-      if (summary) {
-        summary.animate([
-          { opacity: 0, transform: "translateX(-30px) scale(0.97)" },
-          { opacity: 1, transform: "translateX(0) scale(1)" }
-        ], {
-          duration: 600,
-          delay: 100,
-          easing: easingCurve,
-          fill: "both"
-        });
-      }
-      if (copy) {
-        copy.animate([
-          { opacity: 0, transform: "translateY(30px) scale(0.97)" },
+      const items = [headerRow, statsRow, chartsRow, potentialCard, actionsRow, gamesFooter].filter(Boolean);
+      items.forEach((item, index) => {
+        item.animate([
+          { opacity: 0, transform: "translateY(24px) scale(0.99)" },
           { opacity: 1, transform: "translateY(0) scale(1)" }
         ], {
-          duration: 600,
-          delay: 180,
+          duration: 550,
+          delay: 80 + index * 70,
           easing: easingCurve,
           fill: "both"
         });
-      }
-      if (cta) {
-        cta.animate([
-          { opacity: 0, transform: "translateX(30px) scale(0.97)" },
-          { opacity: 1, transform: "translateX(0) scale(1)" }
-        ], {
-          duration: 600,
-          delay: 260,
-          easing: easingCurve,
-          fill: "both"
-        });
-      }
-      if (potential) {
-        potential.animate([
-          { opacity: 0, transform: "translateY(24px) scale(0.98)" },
-          { opacity: 1, transform: "translateY(0) scale(1)" }
-        ], {
-          duration: 600,
-          delay: 340,
-          easing: easingCurve,
-          fill: "both"
-        });
-      }
-    } else if (nextView === storyStage) {
+      });
+    } else if (nextView === storyStage || nextView === endBriefingStage) {
       const visual = nextView.querySelector(".briefing-visual");
       const content = nextView.querySelector(".briefing-content");
+      const gamesFooter = nextView.querySelector(".vault-games-footer");
       if (visual) {
         visual.animate([
           { opacity: 0, transform: "translateX(-30px) scale(0.97)" },
@@ -736,47 +729,81 @@ function transitionToView(nextView, onComplete) {
           fill: "both"
         });
       }
+      if (gamesFooter) {
+        gamesFooter.animate([
+          { opacity: 0, transform: "translateY(24px) scale(0.99)" },
+          { opacity: 1, transform: "translateY(0) scale(1)" }
+        ], {
+          duration: 550,
+          delay: 250,
+          easing: easingCurve,
+          fill: "both"
+        });
+      }
     }
   }
 
   let completed = 0;
+  let transitionTimeout = null;
+
+  function forceComplete() {
+    console.log("forceComplete executing", { viewTransitioning, transitionTimeout: !!transitionTimeout });
+    if (!viewTransitioning) return;
+    if (transitionTimeout) {
+      clearTimeout(transitionTimeout);
+      transitionTimeout = null;
+    }
+
+    currentView.hidden = true;
+    currentView.classList.remove("active");
+
+    // Clear main views styling
+    clearAnimatedStyles(currentView);
+    clearAnimatedStyles(nextView);
+    clearAnimatedStyles(morphFlash);
+    clearAnimatedStyles(missionStage);
+    missionStage.classList.remove("is-transitioning");
+
+    // Clear child elements that were stagger-animated
+    const childSelectors = [
+      ".dossier-console", ".vault-games-footer",
+      ".result-title-block", ".complete-stats",
+      ".result-charts-row", ".potential-card", ".result-actions-row",
+      ".briefing-visual", ".briefing-content"
+    ];
+    childSelectors.forEach(selector => {
+      const el = nextView.querySelector(selector) || currentView.querySelector(selector);
+      if (el) clearAnimatedStyles(el);
+    });
+
+    activeMissionView = nextView;
+    viewTransitioning = false;
+    if (onComplete) onComplete();
+  }
+
   function checkDone() {
     completed++;
+    console.log("checkDone called", { completed });
     if (completed === 4) {
-      currentView.hidden = true;
-      currentView.classList.remove("active");
-
-      // Clear main views styling
-      clearAnimatedStyles(currentView);
-      clearAnimatedStyles(nextView);
-      clearAnimatedStyles(morphFlash);
-      clearAnimatedStyles(missionStage);
-      missionStage.classList.remove("is-transitioning");
-
-      // Clear child elements that were stagger-animated
-      const childSelectors = [
-        ".briefing-panel", ".dossier-console",
-        ".result-summary", ".result-copy", ".cta-box", ".potential-card",
-        ".briefing-visual", ".briefing-content"
-      ];
-      childSelectors.forEach(selector => {
-        const el = nextView.querySelector(selector) || currentView.querySelector(selector);
-        if (el) clearAnimatedStyles(el);
-      });
-
-      activeMissionView = nextView;
-      viewTransitioning = false;
-      if (onComplete) onComplete();
+      forceComplete();
     }
   }
 
   flashAnim.onfinish = checkDone;
   fadeOutAnim.onfinish = checkDone;
   heightAnim.onfinish = () => {
+    console.log("heightAnim onfinish");
     missionStage.style.height = `${nextHeight}px`;
     checkDone();
   };
   fadeInAnim.onfinish = checkDone;
+
+  // Fallback timeout
+  console.log("Setting transition fallback timeout");
+  transitionTimeout = window.setTimeout(() => {
+    console.warn("View transition timed out. Forcing completion.");
+    forceComplete();
+  }, 950);
 }
 
 function typeStoryText(text) {
@@ -800,6 +827,30 @@ function setStoryProgress(activeIndex) {
   });
 }
 
+let currentStorySlideIndex = -1;
+
+function updateSubtitles(currentTime) {
+  let index = 0;
+  if (currentTime < 2) {
+    index = 0;
+  } else if (currentTime < 8) {
+    index = 1;
+  } else if (currentTime < 14) {
+    index = 2;
+  } else if (currentTime < 18) {
+    index = 3;
+  } else if (currentTime < 23) {
+    index = 4;
+  } else {
+    index = 5;
+  }
+
+  if (index !== currentStorySlideIndex) {
+    currentStorySlideIndex = index;
+    playBriefingSlide(index);
+  }
+}
+
 function playBriefingSlide(index = 0) {
   const isFinalSlide = index >= storySlides.length - 1;
 
@@ -807,19 +858,7 @@ function playBriefingSlide(index = 0) {
   typeStoryText(storySlides[index]);
   playTone(360 + index * 80, 0.07, 0, "triangle", 0.018);
 
-  const briefingImg = document.querySelector(".briefing-visual img");
-  if (briefingImg) {
-    briefingImg.animate([
-      { transform: "scale(0.97)" },
-      { transform: "scale(1)" }
-    ], {
-      duration: 550,
-      easing: "cubic-bezier(0.1, 0.8, 0.3, 1)"
-    });
-  }
-
   if (isFinalSlide) {
-    briefingPlaying = false;
     playBriefingButton.textContent = "Briefing voltooid";
     beginMissionButton.innerHTML = '<span aria-hidden="true">&#9658;</span> Begin de test';
     beginMissionButton.classList.replace("secondary-story-button", "primary-button");
@@ -831,15 +870,52 @@ function playBriefingSlide(index = 0) {
       duration: 500,
       easing: "cubic-bezier(0.34, 1.56, 0.64, 1)"
     });
-
     beginMissionButton.disabled = false;
     unlockNote.textContent = "Missie vrijgegeven. Klik op Begin de test om de typetest klaar te zetten.";
     beginMissionButton.focus();
     playMilestoneSound();
+  }
+}
+
+function triggerVideoGlitch(hudElement, onComplete) {
+  if (!hudElement) {
+    if (onComplete) onComplete();
     return;
   }
 
-  storyTimeoutId = window.setTimeout(() => playBriefingSlide(index + 1), 3600);
+  if (hudElement.glitchTimeout) {
+    clearTimeout(hudElement.glitchTimeout);
+  }
+
+  hudElement.classList.add("glitch-active");
+  playGlitchSound();
+
+  hudElement.glitchTimeout = window.setTimeout(() => {
+    hudElement.classList.remove("glitch-active");
+    hudElement.glitchTimeout = null;
+    if (onComplete) onComplete();
+  }, 800);
+}
+
+function clearVideoGlitch(hudElement) {
+  if (!hudElement) return;
+  hudElement.classList.remove("glitch-active");
+  if (hudElement.glitchTimeout) {
+    clearTimeout(hudElement.glitchTimeout);
+    hudElement.glitchTimeout = null;
+  }
+}
+
+function playGlitchSound() {
+  if (!soundEnabled || !audioContext) return;
+  for (let i = 0; i < 6; i++) {
+    const freq = 150 + Math.random() * 850;
+    const duration = 0.02 + Math.random() * 0.04;
+    const delay = i * 0.06;
+    const type = Math.random() > 0.5 ? "square" : "sawtooth";
+    const volume = 0.005 + Math.random() * 0.008;
+    playTone(freq, duration, delay, type, volume);
+  }
 }
 
 function startBriefing() {
@@ -851,18 +927,47 @@ function startBriefing() {
   }
 
   briefingPlaying = true;
+  if (startLiveBadge) {
+    startLiveBadge.textContent = "Miss J live";
+    startLiveBadge.classList.remove("calling");
+  }
   beginMissionButton.disabled = false;
   beginMissionButton.textContent = "Sla briefing over";
   playBriefingButton.disabled = true;
   playBriefingButton.textContent = "Miss J spreekt...";
   playStartSound();
   clearTimeout(storyTimeoutId);
-  playBriefingSlide(0);
+
+  clearInterval(typewriterId);
+  storyText.textContent = "Verbinding maken...";
+
+  currentStorySlideIndex = -1;
+
+  if (briefingVideo) {
+    briefingVideo.currentTime = 0;
+    briefingVideo.muted = false;
+    briefingVideo.volume = 1.0;
+    triggerVideoGlitch(briefingVideo.closest(".briefing-avatar-hud"), () => {
+      if (briefingPlaying) {
+        briefingVideo.play().catch(err => console.warn("Video play failed:", err));
+        updateSubtitles(0);
+      }
+    });
+  } else {
+    updateSubtitles(0);
+  }
 }
 
 function completeOnboarding({ startImmediately = false } = {}) {
+  console.log("completeOnboarding called", { startImmediately });
   clearTimeout(storyTimeoutId);
   clearInterval(typewriterId);
+
+  if (briefingVideo) {
+    briefingVideo.pause();
+    clearVideoGlitch(briefingVideo.closest(".briefing-avatar-hud"));
+  }
+
   onboardingComplete = true;
   briefingPlaying = false;
   beginMissionButton.disabled = false;
@@ -871,6 +976,7 @@ function completeOnboarding({ startImmediately = false } = {}) {
   playBriefingButton.disabled = false;
   storyStage.classList.add("complete");
   unlockNote.textContent = "Briefing voltooid. De typetest is ontgrendeld.";
+  console.log("calling resetTest inside completeOnboarding");
   resetTest();
 
   missionStage.scrollIntoView({
@@ -878,7 +984,9 @@ function completeOnboarding({ startImmediately = false } = {}) {
     block: "center"
   });
 
+  console.log("calling transitionToView(missionLayout) inside completeOnboarding");
   transitionToView(missionLayout, () => {
+    console.log("transitionToView missionLayout onComplete callback running", { startImmediately });
     if (startImmediately) {
       window.setTimeout(startTest, 120);
     }
@@ -922,7 +1030,9 @@ function typewriteMissionStatus(text) {
 
 function setMissionCopy(status, message) {
   typewriteMissionStatus(status);
-  missionMessage.textContent = message;
+  if (missionMessage) {
+    missionMessage.textContent = message;
+  }
 }
 
 function createAudioContext() {
@@ -1297,6 +1407,19 @@ function resetTest() {
   testArmed = false;
   testReadyToFinish = false;
   testFinished = false;
+  clearInterval(typewriterId);
+  if (briefingVideo) {
+    briefingVideo.pause();
+    clearVideoGlitch(briefingVideo.closest(".briefing-avatar-hud"));
+  }
+  if (endBriefingVideo) {
+    endBriefingVideo.pause();
+    clearVideoGlitch(endBriefingVideo.closest(".briefing-avatar-hud"));
+  }
+  const tooltip = document.getElementById("chart-tooltip");
+  if (tooltip) {
+    tooltip.classList.remove("visible");
+  }
   paused = false;
   pauseStartTime = 0;
   totalPausedTime = 0;
@@ -1311,7 +1434,6 @@ function resetTest() {
   mistakeCount = 0;
   mistakeHistory = {};
   currentDifficultyLabel = "Basis";
-  // Skip calibration entirely when a fixed difficulty is selected
   calibrationComplete = (selectedDifficulty !== "dynamic");
 
   const couponEl = document.querySelector("#couponCode");
@@ -1325,11 +1447,9 @@ function resetTest() {
     couponEl.style.width = "";
   }
 
-  // Clear adaptive tracking
   rollingWindow.length = 0;
   usedSentences.clear();
 
-  // Build initial text: just ONE calibration sentence
   const initialText = buildInitialText();
   targetWords = initialText.split(/\s+/);
   targetText = targetWords.join(" ");
@@ -1357,12 +1477,12 @@ function resetTest() {
       s.classList.add("locked");
     }
   });
+  const posterContainer = document.querySelector(".poster-container");
   if (posterContainer) {
     posterContainer.classList.remove("needs-reveal", "revealed");
   }
   if (decryptFill) decryptFill.setAttribute("stroke-dasharray", "0 100");
 
-  // Re-enable difficulty dropdown
   if (difficultyDropdown) difficultyDropdown.classList.remove("disabled");
 
   startButton.hidden = false;
@@ -1376,9 +1496,10 @@ function resetTest() {
     resultPanel.hidden = true;
     resultPanel.classList.remove("active");
   }
-  ctaFeedback.textContent = "";
+  if (ctaFeedback) {
+    ctaFeedback.textContent = "";
+  }
   setMissionStep(onboardingComplete ? "ready" : "briefing");
-
   setMissionCopy(
     onboardingComplete ? "Wacht op start" : "Briefing nodig",
     onboardingComplete
@@ -1510,8 +1631,104 @@ function completeTimedTest() {
   }, 2600);
 }
 
+let endBriefingPlaying = false;
+let currentEndStorySlideIndex = -1;
+
 function showResults() {
-  if (!testReadyToFinish || activeMissionView === resultPanel) return;
+  if (!testReadyToFinish || activeMissionView === resultPanel || activeMissionView === endBriefingStage) return;
+
+  startEndBriefing();
+  transitionToView(endBriefingStage);
+}
+
+function startEndBriefing() {
+  if (endBriefingPlaying) return;
+
+  createAudioContext();
+  if (audioContext && audioContext.state === "suspended") {
+    audioContext.resume();
+  }
+
+  endBriefingPlaying = true;
+
+  clearInterval(typewriterId);
+  endBriefingText.textContent = "Verbinding maken...";
+
+  currentEndStorySlideIndex = -1;
+
+  if (endBriefingVideo) {
+    endBriefingVideo.currentTime = 0;
+    endBriefingVideo.muted = false;
+    endBriefingVideo.volume = 1.0;
+    triggerVideoGlitch(endBriefingVideo.closest(".briefing-avatar-hud"), () => {
+      if (endBriefingPlaying) {
+        endBriefingVideo.play().catch(err => console.warn("End video play failed:", err));
+        updateEndSubtitles(0);
+      }
+    });
+  } else {
+    updateEndSubtitles(0);
+  }
+}
+
+function updateEndSubtitles(currentTime) {
+  let index = 0;
+  if (currentTime < 3) {
+    index = 0;
+  } else if (currentTime < 6) {
+    index = 1;
+  } else if (currentTime < 11) {
+    index = 2;
+  } else if (currentTime < 14) {
+    index = 3;
+  } else if (currentTime < 18) {
+    index = 4;
+  } else if (currentTime < 26) {
+    index = 5;
+  } else {
+    index = 6;
+  }
+
+  if (index !== currentEndStorySlideIndex) {
+    currentEndStorySlideIndex = index;
+    playEndBriefingSlide(index);
+  }
+}
+
+function playEndBriefingSlide(index = 0) {
+  const isFinalSlide = index >= endStorySlides.length - 1;
+
+  const dots = document.querySelectorAll("#endBriefingProgress span");
+  dots.forEach((dot, idx) => {
+    dot.classList.toggle("active", idx <= index);
+  });
+
+  clearInterval(typewriterId);
+  endBriefingText.textContent = "";
+  let textIndex = 0;
+  const slideText = endStorySlides[index];
+  typewriterId = window.setInterval(() => {
+    endBriefingText.textContent += slideText[textIndex];
+    textIndex += 1;
+    if (textIndex >= slideText.length) {
+      clearInterval(typewriterId);
+    }
+  }, 16);
+
+  playTone(360 + index * 80, 0.07, 0, "triangle", 0.018);
+}
+
+function completeEndBriefing() {
+  if (endBriefingVideo) {
+    endBriefingVideo.pause();
+    clearVideoGlitch(endBriefingVideo.closest(".briefing-avatar-hud"));
+  }
+  endBriefingPlaying = false;
+  revealResults();
+}
+
+function revealResults() {
+  if (activeMissionView === resultPanel) return;
 
   const stats = resultStats || getTypedStats(finalElapsed);
   let resultIntro = "Wow, goed gedaan zeg! Ik zie dat jij het absoluut in je hebt om een superspion te worden. Met de TypeMission-cursus leren wij je hoe je razendsnel en volledig blind met 10 vingers leert typen!";
@@ -1523,25 +1740,22 @@ function showResults() {
     }
   }
 
-  const mistakeLabel = stats.mistakes === 1 ? "1 fout" : `${stats.mistakes} fouten`;
-
   const spyFactEl = document.querySelector("#spyFact");
   if (spyFactEl) {
     if (stats.apm >= 100 && stats.accuracy < 90) {
-      spyFactEl.innerHTML = "<strong>Leuk feitje:</strong> Je typt lekker snel, maar volleerd spionnen maken bijna geen fouten en typen volledig blind met 10 vingers! Onze cursus traint jou om met 10 vingers foutloos te typen.";
+      spyFactEl.innerHTML = "<strong>Wist je dat:</strong> Geslaagde Super Spionnen typen met wel meer dan 120 aanslagen per minuut, sommigen zelfs wel meer dan 170! Echte spionnen maken bovendien bijna geen fouten en typen volledig blind met 10 vingers. Onze cursus helpt jou om met 10 vingers foutloos te typen!";
     } else if (stats.apm >= 120) {
-      spyFactEl.innerHTML = "<strong>Leuk feitje:</strong> Je typt nu al op het niveau van een volleerd spion (120+ APM)!";
+      spyFactEl.innerHTML = "<strong>Wist je dat:</strong> Geslaagde Super Spionnen typen met wel meer dan 120 aanslagen per minuut, sommigen zelfs wel meer dan 170! Het wereldrecord blindtypen staat op een ongelofelijke snelheid van wel 800+ APM!";
     } else {
-      spyFactEl.innerHTML = "<strong>Wist je dat:</strong> Volleerd spionnen typen met wel meer dan 120 aanslagen per minuut! Wil jij dat ook kunnen? Doe dan onze typecursus en word razendsnel.";
+      spyFactEl.innerHTML = "<strong>Wist je dat:</strong> Geslaagde Super Spionnen typen met wel meer dan 120 aanslagen per minuut, sommigen zelfs wel meer dan 170! Wil jij dat ook leren? Doe dan onze typecursus en word razendsnel.";
     }
   }
 
   resultTitle.textContent = stats.apm >= 120 ? "Dossier ontcijferd, superspion!" : (stats.coins >= 260 ? "Dossier ontcijferd, rekruut!" : "Missie voltooid, rekruut");
-  resultText.textContent = `${stats.apm} aanslagen per minuut, ${stats.accuracy}% precisie en ${mistakeLabel}. Je kreeg ${stats.coins} Super Spy School coins! ${resultIntro}`;
+  if (resultText) resultText.textContent = resultIntro;
   startButton.disabled = false;
   startButton.innerHTML = '<span aria-hidden="true">&#9658;</span> Nog een poging';
   setMissionStep("result");
-
   setMissionCopy(
     "Missie voltooid",
     `Je haalde ${stats.apm} APM en ${stats.coins} Super Spy School coins.`
@@ -1550,7 +1764,7 @@ function showResults() {
   showInlineComplete(stats);
 
   transitionToView(resultPanel, () => {
-    const agentCard = document.querySelector(".result-agent-card");
+    const agentCard = document.querySelector(".agent-profile-badge");
     if (agentCard) {
       agentCard.animate([
         { transform: "scale(0.94)", opacity: 0.72 },
@@ -1561,7 +1775,7 @@ function showResults() {
       });
     }
 
-    const coinImg = document.querySelector(".reward-total img");
+    const coinImg = document.querySelector(".reward-coin-icon");
     if (coinImg) {
       coinImg.animate([
         { transform: "rotateY(0deg)" },
@@ -1572,11 +1786,12 @@ function showResults() {
       });
     }
 
-    // Run custom count-up animations for statistics
     animateValue(completeCoins, 0, stats.coins, 1200);
     animateValue(completeWpm, 0, stats.apm, 1200);
     animateValue(completeAccuracy, 0, stats.accuracy, 1200, "%");
     animateValue(completeMistakes, 0, stats.mistakes, 1200);
+
+    renderResultCharts(stats.apm, stats.accuracy);
 
     missionStage.scrollIntoView({
       behavior: prefersReducedMotion ? "auto" : "smooth",
@@ -1595,7 +1810,6 @@ function showInlineComplete(stats) {
   const rank = getRank(stats);
   rankBadge.textContent = rank;
 
-  // Reset stats to 0 or 0% so the counter animates up starting from zero
   completeWpm.textContent = "0";
   completeAccuracy.textContent = "0%";
   completeMistakes.textContent = "0";
@@ -1604,13 +1818,245 @@ function showInlineComplete(stats) {
   playCelebrationSound();
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// CHART RENDERING FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════
+
+function getApmX(val) {
+  if (val <= 120) {
+    return 30 + (Math.max(0, val) / 120) * 200;
+  } else if (val <= 167) {
+    return 230 + ((val - 120) / (167 - 120)) * 140;
+  } else {
+    return 370 + (Math.min(800, val - 167) / (800 - 167)) * 180;
+  }
+}
+
+function getAccX(val) {
+  const minAcc = 75;
+  if (val <= 97) {
+    const pct = Math.max(0, (val - minAcc) / (97 - minAcc));
+    return 30 + pct * 200;
+  } else if (val <= 99) {
+    return 230 + ((val - 97) / (99 - 97)) * 140;
+  } else {
+    return 370 + ((val - 99) / (100 - 99)) * 180;
+  }
+}
+
+function getApmY(x) {
+  const t = (x - 30) / 520;
+  return 150 - (t * (2 - t)) * 125;
+}
+
+function generateCurvePath(startX, endX) {
+  let pathStr = `M ${startX},${getApmY(startX).toFixed(1)}`;
+  const steps = 30;
+  for (let i = 1; i <= steps; i++) {
+    const x = startX + (i / steps) * (endX - startX);
+    const y = getApmY(x);
+    pathStr += ` L ${x.toFixed(1)},${y.toFixed(1)}`;
+  }
+  return pathStr;
+}
+
+function renderResultCharts(apm, accuracy) {
+  const apmContainer = document.querySelector("#apmChartContainer");
+  const accuracyContainer = document.querySelector("#accuracyChartContainer");
+
+  if (!apmContainer || !accuracyContainer) return;
+
+  apmContainer.innerHTML = "";
+  accuracyContainer.innerHTML = "";
+
+  const userApmX = getApmX(apm);
+  const userApmY = getApmY(userApmX);
+  const apmTargetX = 230;
+  const apmTargetY = getApmY(apmTargetX);
+  const apmAverageX = 370;
+  const apmAverageY = getApmY(apmAverageX);
+  const apmWrX = 550;
+  const apmWrY = getApmY(apmWrX);
+
+  const wrUnlocked = apm >= 120;
+
+  const apmSvg = `
+    <svg viewBox="0 0 600 200" class="spy-svg-chart">
+      <defs>
+        <linearGradient id="apmGlowGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="var(--blue)" />
+          <stop offset="100%" stop-color="var(--purple-soft)" />
+        </linearGradient>
+        <filter id="apmShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="var(--blue)" flood-opacity="0.4"/>
+        </filter>
+      </defs>
+      <line x1="30" y1="25" x2="570" y2="25" stroke="rgba(59, 7, 51, 0.08)" stroke-width="1" />
+      <line x1="30" y1="87" x2="570" y2="87" stroke="rgba(59, 7, 51, 0.08)" stroke-width="1" />
+      <line x1="30" y1="150" x2="570" y2="150" stroke="rgba(59, 7, 51, 0.2)" stroke-width="1.5" />
+      <path d="${generateCurvePath(30, 550)}" fill="none" stroke="var(--line)" stroke-width="5" stroke-linecap="round" />
+      <line x1="${apmTargetX}" y1="${apmTargetY}" x2="${apmTargetX}" y2="150" stroke="rgba(59, 7, 51, 0.35)" stroke-dasharray="3,3" />
+      <line x1="${apmAverageX}" y1="${apmAverageY}" x2="${apmAverageX}" y2="150" stroke="rgba(59, 7, 51, 0.35)" stroke-dasharray="3,3" />
+      <line x1="${apmWrX}" y1="${apmWrY}" x2="${apmWrX}" y2="150" stroke="rgba(59, 7, 51, 0.35)" stroke-dasharray="3,3" />
+      <line x1="${userApmX}" y1="150" x2="${userApmX}" y2="${userApmY}" class="chart-user-line" stroke="var(--blue)" stroke-width="2" stroke-dasharray="3,3" opacity="0" />
+      <path d="${generateCurvePath(30, userApmX)}" fill="none" stroke="url(#apmGlowGrad)" stroke-width="6" stroke-linecap="round" class="chart-progress-path" filter="url(#apmShadow)" />
+      <g class="chart-node-group" data-tooltip="Diploma: De minimale snelheid die je behaalt na de TypeMission-cursus (120 APM).">
+        <circle cx="${apmTargetX}" cy="${apmTargetY}" r="7" fill="var(--paper)" stroke="var(--orange)" stroke-width="3.5" />
+        <text x="${apmTargetX}" y="${apmTargetY + 22}" text-anchor="middle" class="chart-node-label" fill="var(--purple)">Diploma</text>
+        <text x="${apmTargetX}" y="172" text-anchor="middle" class="chart-axis-label-main">120</text>
+        <text x="${apmTargetX}" y="188" text-anchor="middle" class="chart-axis-label-sub">APM</text>
+      </g>
+      <g class="chart-node-group" data-tooltip="Gemiddelde: De gemiddelde snelheid van geslaagde cursisten (167 APM).">
+        <circle cx="${apmAverageX}" cy="${apmAverageY}" r="7" fill="var(--paper)" stroke="var(--blue)" stroke-width="3.5" />
+        <text x="${apmAverageX}" y="${apmAverageY + 22}" text-anchor="middle" class="chart-node-label" fill="var(--purple)">Gemiddelde</text>
+        <text x="${apmAverageX}" y="172" text-anchor="middle" class="chart-axis-label-main">167</text>
+        <text x="${apmAverageX}" y="188" text-anchor="middle" class="chart-axis-label-sub">APM</text>
+      </g>
+      <g class="chart-node-group" data-tooltip="Record: Het absolute wereldrecord blindtypen (800+ APM).">
+        <circle cx="${apmWrX}" cy="${apmWrY}" r="7" fill="${wrUnlocked ? 'var(--paper)' : '#dcdce2'}" stroke="${wrUnlocked ? 'var(--orange)' : '#a09da4'}" stroke-width="3.5" />
+        <text x="${apmWrX}" y="${apmWrY + 22}" text-anchor="middle" class="chart-node-label" fill="${wrUnlocked ? 'var(--purple)' : '#a09da4'}">Record</text>
+        <text x="${apmWrX}" y="172" text-anchor="middle" class="chart-axis-label-main" fill="${wrUnlocked ? 'var(--purple)' : '#a09da4'}">800+</text>
+        <text x="${apmWrX}" y="188" text-anchor="middle" class="chart-axis-label-sub" fill="${wrUnlocked ? 'var(--muted)' : '#a09da4'}">APM</text>
+      </g>
+      <g class="chart-user-node" opacity="0">
+        <circle cx="${userApmX}" cy="${userApmY}" r="9" fill="var(--blue)" stroke="var(--paper)" stroke-width="3.5" />
+        <circle cx="${userApmX}" cy="${userApmY}" r="16" fill="var(--blue)" opacity="0.25" class="chart-pulse-circle" style="transform-origin: ${userApmX}px ${userApmY}px;" />
+        <g transform="translate(0, -6)">
+          <rect x="${userApmX - 60}" y="${userApmY - 42}" width="120" height="30" rx="6" fill="var(--purple)" />
+          <polygon points="${userApmX - 5},${userApmY - 12} ${userApmX + 5},${userApmY - 12} ${userApmX},${userApmY - 5}" fill="var(--purple)" />
+          <text x="${userApmX}" y="${userApmY - 22}" text-anchor="middle" font-size="15" font-family="Orbitron" fill="var(--paper)" font-weight="700">${apm} APM</text>
+        </g>
+      </g>
+    </svg>
+  `;
+
+  const userAccX = getAccX(accuracy);
+  const userAccY = getApmY(userAccX);
+  const accTargetX = 230;
+  const accTargetY = getApmY(accTargetX);
+  const accAverageX = 370;
+  const accAverageY = getApmY(accAverageX);
+  const accWrX = 550;
+  const accWrY = getApmY(accWrX);
+  const accWrUnlocked = accuracy >= 97;
+
+  const accuracySvg = `
+    <svg viewBox="0 0 600 200" class="spy-svg-chart">
+      <defs>
+        <linearGradient id="accGlowGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="var(--purple)" />
+          <stop offset="100%" stop-color="var(--orange-soft)" />
+        </linearGradient>
+        <filter id="accShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="var(--purple-soft)" flood-opacity="0.3"/>
+        </filter>
+      </defs>
+      <line x1="30" y1="25" x2="570" y2="25" stroke="rgba(59, 7, 51, 0.08)" stroke-width="1" />
+      <line x1="30" y1="87" x2="570" y2="87" stroke="rgba(59, 7, 51, 0.08)" stroke-width="1" />
+      <line x1="30" y1="150" x2="570" y2="150" stroke="rgba(59, 7, 51, 0.2)" stroke-width="1.5" />
+      <path d="${generateCurvePath(30, 550)}" fill="none" stroke="var(--line)" stroke-width="5" stroke-linecap="round" />
+      <line x1="${accTargetX}" y1="${accTargetY}" x2="${accTargetX}" y2="150" stroke="rgba(59, 7, 51, 0.35)" stroke-dasharray="3,3" />
+      <line x1="${accAverageX}" y1="${accAverageY}" x2="${accAverageX}" y2="150" stroke="rgba(59, 7, 51, 0.35)" stroke-dasharray="3,3" />
+      <line x1="${accWrX}" y1="${accWrY}" x2="${accWrX}" y2="150" stroke="rgba(59, 7, 51, 0.35)" stroke-dasharray="3,3" />
+      <line x1="${userAccX}" y1="150" x2="${userAccX}" y2="${userAccY}" class="chart-user-line" stroke="var(--purple)" stroke-width="2" stroke-dasharray="3,3" opacity="0" />
+      <path d="${generateCurvePath(30, userAccX)}" fill="none" stroke="url(#accGlowGrad)" stroke-width="6" stroke-linecap="round" class="chart-progress-path" filter="url(#accShadow)" />
+      <g class="chart-node-group" data-tooltip="Diploma: De minimale precisie die vereist is om te slagen (97%).">
+        <circle cx="${accTargetX}" cy="${accTargetY}" r="7" fill="var(--paper)" stroke="var(--orange)" stroke-width="3.5" />
+        <text x="${accTargetX}" y="${accTargetY + 22}" text-anchor="middle" class="chart-node-label" fill="var(--purple)">Diploma</text>
+        <text x="${accTargetX}" y="172" text-anchor="middle" class="chart-axis-label-main">97%</text>
+        <text x="${accTargetX}" y="188" text-anchor="middle" class="chart-axis-label-sub">Precisie</text>
+      </g>
+      <g class="chart-node-group" data-tooltip="Gemiddelde: De gemiddelde precisie van geslaagde cursisten (99%).">
+        <circle cx="${accAverageX}" cy="${accAverageY}" r="7" fill="var(--paper)" stroke="var(--blue)" stroke-width="3.5" />
+        <text x="${accAverageX}" y="${accAverageY + 22}" text-anchor="middle" class="chart-node-label" fill="var(--purple)">Gemiddelde</text>
+        <text x="${accAverageX}" y="172" text-anchor="middle" class="chart-axis-label-main">99%</text>
+        <text x="${accAverageX}" y="188" text-anchor="middle" class="chart-axis-label-sub">Precisie</text>
+      </g>
+      <g class="chart-node-group" data-tooltip="Max: De maximale score van 100% foutloze precisie.">
+        <circle cx="${accWrX}" cy="${accWrY}" r="7" fill="${accWrUnlocked ? 'var(--paper)' : '#dcdce2'}" stroke="${accWrUnlocked ? 'var(--orange)' : '#a09da4'}" stroke-width="3.5" />
+        <text x="${accWrX}" y="${accWrY + 22}" text-anchor="middle" class="chart-node-label" fill="${accWrUnlocked ? 'var(--purple)' : '#a09da4'}">Max</text>
+        <text x="${accWrX}" y="172" text-anchor="middle" class="chart-axis-label-main" fill="${accWrUnlocked ? 'var(--purple)' : '#a09da4'}">100%</text>
+        <text x="${accWrX}" y="188" text-anchor="middle" class="chart-axis-label-sub" fill="${accWrUnlocked ? 'var(--muted)' : '#a09da4'}">Precisie</text>
+      </g>
+      <g class="chart-user-node" opacity="0">
+        <circle cx="${userAccX}" cy="${userAccY}" r="9" fill="var(--orange)" stroke="var(--paper)" stroke-width="3.5" />
+        <circle cx="${userAccX}" cy="${userAccY}" r="16" fill="var(--orange-soft)" opacity="0.25" class="chart-pulse-circle" style="transform-origin: ${userAccX}px ${userAccY}px;" />
+        <g transform="translate(0, -6)">
+          <rect x="${userAccX - 60}" y="${userAccY - 42}" width="120" height="30" rx="6" fill="var(--purple)" />
+          <polygon points="${userAccX - 5},${userAccY - 12} ${userAccX + 5},${userAccY - 12} ${userAccX},${userAccY - 5}" fill="var(--purple)" />
+          <text x="${userAccX}" y="${userAccY - 22}" text-anchor="middle" font-size="15" font-family="Orbitron" fill="var(--paper)" font-weight="700">${accuracy}%</text>
+        </g>
+      </g>
+    </svg>
+  `;
+
+  apmContainer.innerHTML = apmSvg;
+  accuracyContainer.innerHTML = accuracySvg;
+
+  setupChartTooltips();
+
+  setTimeout(() => {
+    document.querySelectorAll(".spy-svg-chart").forEach(svg => {
+      const path = svg.querySelector(".chart-progress-path");
+      if (path) {
+        const length = path.getTotalLength();
+        path.style.strokeDasharray = length;
+        path.style.strokeDashoffset = length;
+        path.getBoundingClientRect();
+        path.style.transition = "stroke-dashoffset 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+        path.style.strokeDashoffset = "0";
+      }
+
+      setTimeout(() => {
+        const userLine = svg.querySelector(".chart-user-line");
+        const userNode = svg.querySelector(".chart-user-node");
+        if (userLine) {
+          userLine.style.transition = "opacity 0.6s ease";
+          userLine.style.opacity = "1";
+        }
+        if (userNode) {
+          userNode.style.transition = "opacity 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)";
+          userNode.style.opacity = "1";
+        }
+      }, 1500);
+    });
+  }, 100);
+}
+
+function setupChartTooltips() {
+  let tooltip = document.getElementById("chart-tooltip");
+  if (!tooltip) {
+    tooltip = document.createElement("div");
+    tooltip.id = "chart-tooltip";
+    tooltip.className = "chart-tooltip";
+    document.body.appendChild(tooltip);
+  }
+
+  const nodes = document.querySelectorAll(".chart-node-group");
+  nodes.forEach(node => {
+    node.addEventListener("mouseenter", () => {
+      const text = node.getAttribute("data-tooltip");
+      if (!text) return;
+      tooltip.textContent = text;
+      tooltip.classList.add("visible");
+      const rect = node.getBoundingClientRect();
+      const tooltipX = rect.left + window.scrollX + rect.width / 2;
+      const tooltipY = rect.top + window.scrollY - 10;
+      tooltip.style.left = `${tooltipX}px`;
+      tooltip.style.top = `${tooltipY}px`;
+    });
+    node.addEventListener("mouseleave", () => {
+      tooltip.classList.remove("visible");
+    });
+  });
+}
+
 function animateValue(element, start, end, duration, suffix = "") {
   if (!element) return;
   let startTimestamp = null;
   const step = (timestamp) => {
     if (!startTimestamp) startTimestamp = timestamp;
     const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-    // Cubic ease-out curve
     const easeProgress = 1 - Math.pow(1 - progress, 3);
     const currentValue = Math.round(easeProgress * (end - start) + start);
     element.textContent = currentValue + suffix;
@@ -1745,6 +2191,33 @@ retryResultButton.addEventListener("click", () => {
 playBriefingButton.addEventListener("click", startBriefing);
 beginMissionButton.addEventListener("click", () => completeOnboarding({ startImmediately: true }));
 
+if (skipEndBriefingButton) {
+  skipEndBriefingButton.addEventListener("click", completeEndBriefing);
+}
+
+// Video timeupdate listeners for subtitle syncing
+if (briefingVideo) {
+  briefingVideo.addEventListener("timeupdate", () => {
+    if (briefingPlaying) {
+      updateSubtitles(briefingVideo.currentTime);
+    }
+  });
+  briefingVideo.addEventListener("ended", () => {
+    briefingPlaying = false;
+    playBriefingButton.textContent = "Briefing voltooid";
+    playBriefingButton.disabled = false;
+  });
+}
+
+if (endBriefingVideo) {
+  endBriefingVideo.addEventListener("timeupdate", () => {
+    if (endBriefingPlaying) {
+      updateEndSubtitles(endBriefingVideo.currentTime);
+    }
+  });
+  endBriefingVideo.addEventListener("ended", completeEndBriefing);
+}
+
 startMissionHero.addEventListener("click", (event) => {
   if (!onboardingComplete) {
     event.preventDefault();
@@ -1752,11 +2225,12 @@ startMissionHero.addEventListener("click", (event) => {
   }
 });
 
-if (posterContainer) {
-  posterContainer.addEventListener("click", () => {
-    if (posterContainer.classList.contains("needs-reveal")) {
-      posterContainer.classList.remove("needs-reveal");
-      posterContainer.classList.add("revealed");
+const posterContainerEl = document.querySelector(".poster-container");
+if (posterContainerEl) {
+  posterContainerEl.addEventListener("click", () => {
+    if (posterContainerEl.classList.contains("needs-reveal")) {
+      posterContainerEl.classList.remove("needs-reveal");
+      posterContainerEl.classList.add("revealed");
       playTone(700, 0.15, 0, "sine");
     }
   });
