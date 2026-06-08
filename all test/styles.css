@@ -5324,20 +5324,19 @@ body.theme-leaderboard #leaderboardSectionResult {
   color: #2e7d32;
 }
 
-/* Premium Saved Name Message Badge */
 .saved-name-badge {
   display: inline-flex;
   align-items: center;
-  gap: 14px;
+  gap: 8px;
   background: rgba(102, 53, 93, 0.04);
-  border: 2px solid var(--line);
-  border-radius: 12px;
-  padding: 10px 24px;
-  font-size: 0.9rem;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.76rem;
   color: var(--purple-soft);
   box-shadow: none;
   max-width: fit-content;
-  margin: 0 auto;
+  margin: 0;
   font-family: "Orbitron", sans-serif;
   letter-spacing: 0.5px;
 }
@@ -5389,11 +5388,11 @@ body.theme-leaderboard #leaderboardSectionResult {
   color: var(--orange);
   text-decoration: none;
   cursor: pointer;
-  padding: 4px 12px;
-  font-size: 0.76rem;
+  padding: 3px 10px;
+  font-size: 0.68rem;
   font-family: "Orbitron", sans-serif;
   font-weight: 700;
-  margin-left: 12px;
+  margin-left: 8px;
   text-transform: uppercase;
   transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
