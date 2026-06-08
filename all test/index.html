@@ -14,6 +14,10 @@
   <header class="site-header" aria-label="TypeMission navigatie">
     <a class="login-link" href="https://app.typemission.com/">Inloggen</a>
 
+    <a class="logo-link" href="https://www.typemission.be/" aria-label="TypeMission home">
+      <img src="assets/tm-logo.webp" alt="TypeMission">
+    </a>
+
     <!-- Unified Test Selector dropdown -->
     <div class="test-selector-wrapper">
       <span class="test-selector-label">Variant:</span>
@@ -24,15 +28,12 @@
         </div>
         <ul class="dropdown-list">
           <li data-val="normal">Standaard Typetest</li>
+          <li data-val="leaderboard">Standaard met Leaderboard</li>
           <li data-val="kluis" class="selected">Kraak de Kluis</li>
           <li data-val="dossier">Ontcijfer het Dossier</li>
         </ul>
       </div>
     </div>
-
-    <a class="logo-link" href="https://www.typemission.be/" aria-label="TypeMission home">
-      <img src="assets/tm-logo.webp" alt="TypeMission">
-    </a>
     <nav class="main-nav" aria-label="Hoofdmenu">
       <a href="#hoe-werkt-het">Hoe werkt het?</a>
       <a href="#typetest">Typetest</a>
@@ -51,6 +52,7 @@
           
           <!-- Variant-specific Hero Headers -->
           <h1 id="page-title-normal" class="page-title title-normal" style="display:none;">Hoe snel typ jij als superspion?</h1>
+          <h1 id="page-title-leaderboard" class="page-title title-leaderboard" style="display:none;">Typetest met Leaderboard</h1>
           <h1 id="page-title-kluis" class="page-title title-kluis">Kraak de kluis als superspion!</h1>
           <h1 id="page-title-dossier" class="page-title title-dossier" style="display:none;">Ontcijfer het geheime dossier!</h1>
           
@@ -59,6 +61,10 @@
             Doe de korte TypeMission-test van Miss J. In 1 minuut ontdek je
             jouw snelheid, zonder lange lap tekst of eindpunt waar je op kunt
             vastlopen.
+          </p>
+          <p class="hero-lead lead-leaderboard" style="display:none;">
+            Doe de korte TypeMission-test van Miss J met een leaderboard. In 1 minuut ontdek je
+            jouw snelheid en zie je direct jouw plaats op de ranglijst!
           </p>
           <p class="hero-lead lead-kluis">
             De kluis van de vijand zit op slot. Typ de geheime code snel en
@@ -127,6 +133,7 @@
           <div>
             <p class="eyebrow dark">De toelatingstest van Miss J</p>
             <h2 id="test-title-normal" class="test-title title-normal" style="display:none;">Typetest van 1 minuut</h2>
+            <h2 id="test-title-leaderboard" class="test-title title-leaderboard" style="display:none;">Typetest met Leaderboard</h2>
             <h2 id="test-title-kluis" class="test-title title-kluis">Kraak de kluis in 1 minuut</h2>
             <h2 id="test-title-dossier" class="test-title title-dossier" style="display:none;">Ontcijfer het dossier in 1 minuut</h2>
           </div>
@@ -190,6 +197,76 @@
               </div>
             </section>
             
+            <!-- Leaderboard Section (Story) -->
+            <div class="leaderboard-container collapsed" id="leaderboardSectionStory">
+              <!-- Collapsed Preview Frame -->
+              <div class="leaderboard-preview-frame" id="leaderboardPreviewStory">
+                <div class="mini-podium-container" id="leaderboardMiniPodiumStory"></div>
+                <div class="leaderboard-preview-status" id="leaderboardStatusStory"></div>
+                <button type="button" class="leaderboard-expand-btn" id="leaderboardExpandBtnStory">
+                  <span class="btn-text">Bekijk Volledige Ranglijst</span> <span class="btn-icon">▾</span>
+                </button>
+              </div>
+
+              <!-- Expanded Content -->
+              <div class="leaderboard-expanded-content" id="leaderboardExpandedStory" style="display: none; height: 0; opacity: 0; overflow: hidden;">
+                <div class="leaderboard-header">
+                  <div class="header-text-group">
+                    <h3 class="leaderboard-title">Ranglijst Superspionnen</h3>
+                    <p class="leaderboard-subtitle">Kan jij de topsnelheid van Miss J verbeteren?</p>
+                  </div>
+                  <button type="button" class="leaderboard-collapse-btn" id="leaderboardCollapseBtnStory">
+                    <span class="btn-text">Sluiten</span> <span class="btn-icon">▴</span>
+                  </button>
+                </div>
+                
+                <!-- Feedback alert wrapper -->
+                <div id="leaderboardFeedbackStory" class="leaderboard-feedback error" style="display: none;"></div>
+
+                <!-- Saved Name Message -->
+                <div class="saved-message-wrapper" style="text-align: center; margin-bottom: 24px; width: 100%;">
+                  <div id="leaderboardSavedMessageStory" class="saved-name-badge" style="display: none;">
+                    <span class="status-indicator"></span>
+                    <span class="badge-text">Geregistreerd als agent: <strong id="savedSpyNameDisplayStory"></strong> (score opgeslagen)</span>
+                    <button type="button" class="change-name-btn" id="changeSpyNameBtnStory">Naam wijzigen</button>
+                  </div>
+                </div>
+                
+                <div class="leaderboard-controls">
+                  <div class="leaderboard-tabs">
+                    <button type="button" class="tab-btn active" data-period="all" id="tabStoryAll">All Time</button>
+                    <button type="button" class="tab-btn" data-period="daily" id="tabStoryDaily">Daily</button>
+                    <button type="button" class="tab-btn" data-period="weekly" id="tabStoryWeekly">Weekly</button>
+                    <button type="button" class="tab-btn" data-period="monthly" id="tabStoryMonthly">Monthly</button>
+                  </div>
+                  <div class="leaderboard-search">
+                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" class="search-input" id="leaderboardSearchStory" placeholder="Zoek spion..." autocomplete="off">
+                  </div>
+                </div>
+
+                <div class="podium-wrapper" id="leaderboardPodiumStory"></div>
+
+                <div class="leaderboard-list">
+                  <div class="leaderboard-header-row">
+                    <div class="col-rank">Positie</div>
+                    <div class="col-name">Spion</div>
+                    <div class="col-wpm text-right">APM</div>
+                    <div class="col-accuracy text-right">Precisie</div>
+                  </div>
+                  <div class="leaderboard-rows-container" id="leaderboardBodyStory"></div>
+                </div>
+                <div class="leaderboard-pagination" id="leaderboardPaginationStory">
+                  <button type="button" class="page-btn prev-btn" id="leaderboardPrevBtnStory">Vorige</button>
+                  <span class="page-info" id="leaderboardPageInfoStory">Pagina 1 van 1</span>
+                  <button type="button" class="page-btn next-btn" id="leaderboardNextBtnStory">Volgende</button>
+                </div>
+              </div>
+            </div>
+            
             <!-- Shared games footer during briefing -->
             <div class="vault-games-footer">
               <h3 class="vault-games-title">Oefen verder met andere opdrachten</h3>
@@ -242,7 +319,7 @@
                   </div>
                 </div>
 
-                <div class="vault-stats" aria-label="Live resultaten">
+                <div class="vault-stats leaderboard-stats-row" aria-label="Live resultaten">
                   <div class="vault-stat">
                     <span class="stat-value timer">60</span>
                     <span class="stat-label">seconden</span>
@@ -258,6 +335,13 @@
                   <div class="vault-stat">
                     <span class="stat-value accuracy">100%</span>
                     <span class="stat-label">precisie</span>
+                  </div>
+                  <div class="vault-stat">
+                    <div class="position-value-wrapper">
+                      <span class="stat-value current-position">—</span>
+                      <span class="position-arrow neutral"></span>
+                    </div>
+                    <span class="stat-label">positie</span>
                   </div>
                 </div>
 
@@ -547,6 +631,76 @@
                 <span aria-hidden="true">&#8635;</span> Opnieuw
               </button>
             </div>
+            
+            <!-- Leaderboard Section (Play) -->
+            <div class="leaderboard-container collapsed" id="leaderboardSectionPlay">
+              <!-- Collapsed Preview Frame -->
+              <div class="leaderboard-preview-frame" id="leaderboardPreviewPlay">
+                <div class="mini-podium-container" id="leaderboardMiniPodiumPlay"></div>
+                <div class="leaderboard-preview-status" id="leaderboardStatusPlay"></div>
+                <button type="button" class="leaderboard-expand-btn" id="leaderboardExpandBtnPlay">
+                  <span class="btn-text">Bekijk Volledige Ranglijst</span> <span class="btn-icon">▾</span>
+                </button>
+              </div>
+
+              <!-- Expanded Content -->
+              <div class="leaderboard-expanded-content" id="leaderboardExpandedPlay" style="display: none; height: 0; opacity: 0; overflow: hidden;">
+                <div class="leaderboard-header">
+                  <div class="header-text-group">
+                    <h3 class="leaderboard-title">Ranglijst Superspionnen</h3>
+                    <p class="leaderboard-subtitle">Kan jij de topsnelheid van Miss J verbeteren?</p>
+                  </div>
+                  <button type="button" class="leaderboard-collapse-btn" id="leaderboardCollapseBtnPlay">
+                    <span class="btn-text">Sluiten</span> <span class="btn-icon">▴</span>
+                  </button>
+                </div>
+                
+                <!-- Feedback alert wrapper -->
+                <div id="leaderboardFeedbackPlay" class="leaderboard-feedback error" style="display: none;"></div>
+
+                <!-- Saved Name Message -->
+                <div class="saved-message-wrapper" style="text-align: center; margin-bottom: 24px; width: 100%;">
+                  <div id="leaderboardSavedMessagePlay" class="saved-name-badge" style="display: none;">
+                    <span class="status-indicator"></span>
+                    <span class="badge-text">Geregistreerd als agent: <strong id="savedSpyNameDisplayPlay"></strong> (score opgeslagen)</span>
+                    <button type="button" class="change-name-btn" id="changeSpyNameBtnPlay">Naam wijzigen</button>
+                  </div>
+                </div>
+                
+                <div class="leaderboard-controls">
+                  <div class="leaderboard-tabs">
+                    <button type="button" class="tab-btn active" data-period="all" id="tabPlayAll">All Time</button>
+                    <button type="button" class="tab-btn" data-period="daily" id="tabPlayDaily">Daily</button>
+                    <button type="button" class="tab-btn" data-period="weekly" id="tabPlayWeekly">Weekly</button>
+                    <button type="button" class="tab-btn" data-period="monthly" id="tabPlayMonthly">Monthly</button>
+                  </div>
+                  <div class="leaderboard-search">
+                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" class="search-input" id="leaderboardSearchPlay" placeholder="Zoek spion..." autocomplete="off">
+                  </div>
+                </div>
+
+                <div class="podium-wrapper" id="leaderboardPodiumPlay"></div>
+
+                <div class="leaderboard-list">
+                  <div class="leaderboard-header-row">
+                    <div class="col-rank">Positie</div>
+                    <div class="col-name">Spion</div>
+                    <div class="col-wpm text-right">APM</div>
+                    <div class="col-accuracy text-right">Precisie</div>
+                  </div>
+                  <div class="leaderboard-rows-container" id="leaderboardBodyPlay"></div>
+                </div>
+                <div class="leaderboard-pagination" id="leaderboardPaginationPlay">
+                  <button type="button" class="page-btn prev-btn" id="leaderboardPrevBtnPlay">Vorige</button>
+                  <span class="page-info" id="leaderboardPageInfoPlay">Pagina 1 van 1</span>
+                  <button type="button" class="page-btn next-btn" id="leaderboardNextBtnPlay">Volgende</button>
+                </div>
+              </div>
+            </div>
 
             <!-- Unified games footer during play -->
             <div class="vault-games-footer">
@@ -749,6 +903,88 @@
                 Bij TypeMission oefen je stap voor stap tot je snel en foutloos blind kunt typen met tien vingers.
               </p>
 
+              <!-- Leaderboard Section (Result) -->
+              <div class="leaderboard-container" id="leaderboardSectionResult">
+                <!-- Collapsed Preview Frame -->
+                <div class="leaderboard-preview-frame" id="leaderboardPreviewResult" style="display: none; height: 0; opacity: 0; overflow: hidden;">
+                  <div class="mini-podium-container" id="leaderboardMiniPodiumResult"></div>
+                  <div class="leaderboard-preview-status" id="leaderboardStatusResult"></div>
+                  <button type="button" class="leaderboard-expand-btn" id="leaderboardExpandBtnResult">
+                    <span class="btn-text">Bekijk Volledige Ranglijst</span> <span class="btn-icon">▾</span>
+                  </button>
+                </div>
+
+                <!-- Expanded Content -->
+                <div class="leaderboard-expanded-content" id="leaderboardExpandedResult">
+                  <div class="leaderboard-header">
+                    <div class="header-text-group">
+                      <h3 class="leaderboard-title">Ranglijst Superspionnen</h3>
+                      <p class="leaderboard-subtitle">Kan jij de topsnelheid van Miss J verbeteren?</p>
+                    </div>
+                    <button type="button" class="leaderboard-collapse-btn" id="leaderboardCollapseBtnResult">
+                      <span class="btn-text">Sluiten</span> <span class="btn-icon">▴</span>
+                    </button>
+                  </div>
+                  
+                  <!-- Feedback alert wrapper -->
+                  <div id="leaderboardFeedbackResult" class="leaderboard-feedback error" style="display: none;"></div>
+                  
+                  <!-- Submission Form -->
+                  <div id="leaderboardFormResult" class="leaderboard-form">
+                    <span class="form-label">Voeg je naam toe aan het leaderboard:</span>
+                    <div class="form-row">
+                      <input type="text" id="leaderboardNameInputResult" maxlength="15" placeholder="Typ je spionnennaam..." autocomplete="off">
+                      <button class="primary-button" id="leaderboardSubmitBtnResult" type="button">Score opslaan</button>
+                    </div>
+                  </div>
+
+                  <!-- Saved Name Message -->
+                  <div class="saved-message-wrapper" style="text-align: center; margin-bottom: 24px; width: 100%;">
+                    <div id="leaderboardSavedMessageResult" class="saved-name-badge" style="display: none;">
+                      <span class="status-indicator"></span>
+                      <span class="badge-text">Geregistreerd als agent: <strong id="savedSpyNameDisplayResult"></strong> (score opgeslagen)</span>
+                      <button type="button" class="change-name-btn" id="changeSpyNameBtnResult">Naam wijzigen</button>
+                    </div>
+                  </div>
+
+                  <div class="leaderboard-controls">
+                    <div class="leaderboard-tabs">
+                      <button type="button" class="tab-btn active" data-period="all" id="tabResultAll">All Time</button>
+                      <button type="button" class="tab-btn" data-period="daily" id="tabResultDaily">Daily</button>
+                      <button type="button" class="tab-btn" data-period="weekly" id="tabResultWeekly">Weekly</button>
+                      <button type="button" class="tab-btn" data-period="monthly" id="tabResultMonthly">Monthly</button>
+                    </div>
+                    <div class="leaderboard-search">
+                      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      </svg>
+                      <input type="text" class="search-input" id="leaderboardSearchResult" placeholder="Zoek spion..." autocomplete="off">
+                    </div>
+                  </div>
+                  
+                  <div class="podium-wrapper" id="leaderboardPodiumResult"></div>
+                  
+                  <!-- Leaderboard List -->
+                  <div class="leaderboard-list">
+                    <div class="leaderboard-header-row">
+                      <div class="col-rank">Positie</div>
+                      <div class="col-name">Spion</div>
+                      <div class="col-wpm text-right">APM</div>
+                      <div class="col-accuracy text-right">Precisie</div>
+                    </div>
+                    <div class="leaderboard-rows-container" id="leaderboardBodyResult">
+                      <!-- Dynamically populated -->
+                    </div>
+                  </div>
+                  <div class="leaderboard-pagination" id="leaderboardPaginationResult">
+                    <button type="button" class="page-btn prev-btn" id="leaderboardPrevBtnResult">Vorige</button>
+                    <span class="page-info" id="leaderboardPageInfoResult">Pagina 1 van 1</span>
+                    <button type="button" class="page-btn next-btn" id="leaderboardNextBtnResult">Volgende</button>
+                  </div>
+                </div>
+              </div>
+
               <!-- 5. Top Secret Spy Dossier / Coupon -->
               <div class="potential-card">
                 <div class="classified-stamp">TOEGELATEN</div>
@@ -872,6 +1108,8 @@
     <p>Leer typen als een superspion!</p>
   </footer>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <script src="script.js?v=28"></script>
 </body>
 

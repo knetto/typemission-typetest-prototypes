@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 const TOTAL_SECONDS_MAP = {
   normal: 60,
+  leaderboard: 60,
   kluis: 60,
   dossier: 60
 };
@@ -261,6 +262,8 @@ const endStorySlides = [
   "Tot ziens en eh... hopelijk tot gauw!"
 ];
 
+const LEADERBOARD_STATIC_TEXT = "Welkom bij de Super Spy School. Hier leer je snel en nauwkeurig typen. Dit is erg belangrijk voor een geheim agent. Blijf rustig kijken naar de letters en maak geen fouten. Professor Qwerty en Miss J helpen je om de test te halen. Veel succes met je eerste missie! Jouw training begint vandaag. Samen zorgen we voor een veilige verbinding en kraken we alle codes. Een goede spion moet heel geduldig zijn en altijd alert blijven. Kijk goed om je heen en let op de details. Elke letter die je typt brengt ons dichter bij de oplossing. Het is belangrijk dat je jouw vingers op de juiste plaats houdt. Zo kun je blind typen en hoef je niet steeds naar beneden te kijken. Oefen elke dag een klein beetje om nog sneller te worden. De computer registreert al jouw toetsen en berekent je score in realtime. Geef niet op als het een keer fout gaat, want van fouten kun je juist heel veel leren. Wij geloven in jouw talent en wensen je heel veel plezier tijdens deze spannende missie. Zet hem op en laat zien hoe snel jij kunt typen!";
+
 // ═══════════════════════════════════════════════════════════════════
 // STATE VARIABLES
 // ═══════════════════════════════════════════════════════════════════
@@ -345,6 +348,11 @@ const buyButton = document.querySelector("#buyButton");
 const ctaFeedback = document.querySelector("#ctaFeedback");
 const unlockNote = document.querySelector("#unlockNote");
 
+// Live position elements for leaderboard test
+let previousPosition = null;
+const currentPositionEl = document.querySelector(".current-position");
+const positionArrowEl = document.querySelector(".position-arrow");
+
 // Multiple target element groups (one per console theme)
 const timerEls = document.querySelectorAll(".timer");
 const liveWpmEls = document.querySelectorAll(".liveWpm");
@@ -357,17 +365,21 @@ const difficultyDropdowns = document.querySelectorAll(".difficultyDropdown");
 const missionSteps = document.querySelectorAll(".mission-steps li");
 
 // Dynamic selector helpers
+function getTestKey() {
+  return currentTest === "leaderboard" ? "normal" : currentTest;
+}
+
 function getActiveTypingInput() {
-  return document.querySelector(`#${currentTest}TypingInput`);
+  return document.querySelector(`#${getTestKey()}TypingInput`);
 }
 function getActivePromptTextEl() {
-  return document.querySelector(`.${currentTest}-prompt-text`);
+  return document.querySelector(`.${getTestKey()}-prompt-text`);
 }
 function getActiveUploadFillEl() {
-  return document.querySelector(`.${currentTest}-upload-fill`);
+  return document.querySelector(`.${getTestKey()}-upload-fill`);
 }
 function getActiveTypingOverlay() {
-  return document.querySelector(`.${currentTest}-typing-overlay`);
+  return document.querySelector(`.${getTestKey()}-typing-overlay`);
 }
 
 // Vault specific elements
@@ -502,6 +514,10 @@ function pickSentence(apm) {
 let firstSentenceLength = 0;
 
 function buildInitialText() {
+  if (currentTest === "leaderboard") {
+    firstSentenceLength = LEADERBOARD_STATIC_TEXT.length;
+    return LEADERBOARD_STATIC_TEXT;
+  }
   const s1 = pickSentence(0);
   const s2 = pickSentence(0);
   const s3 = pickSentence(0);
@@ -512,12 +528,18 @@ function buildInitialText() {
 
 function regeneratePreviewText() {
   usedSentences.clear();
-  const s1 = pickSentence(0);
-  const s2 = pickSentence(0);
-  const s3 = pickSentence(0);
-  const s4 = pickSentence(0);
-  firstSentenceLength = s1.length;
-  const newText = [s1, s2, s3, s4].join(" ");
+  let newText;
+  if (currentTest === "leaderboard") {
+    newText = LEADERBOARD_STATIC_TEXT;
+    firstSentenceLength = newText.length;
+  } else {
+    const s1 = pickSentence(0);
+    const s2 = pickSentence(0);
+    const s3 = pickSentence(0);
+    const s4 = pickSentence(0);
+    firstSentenceLength = s1.length;
+    newText = [s1, s2, s3, s4].join(" ");
+  }
 
   targetWords = newText.split(/\s+/);
   targetText = targetWords.join(" ");
@@ -599,6 +621,12 @@ function checkCalibration() {
 // ═══════════════════════════════════════════════════════════════════
 
 function appendAdaptiveSentences(count) {
+  if (currentTest === "leaderboard") {
+    const words = LEADERBOARD_STATIC_TEXT.split(/\s+/);
+    targetWords.push(...words);
+    targetText = targetWords.join(" ");
+    return;
+  }
   const apm = getRollingApm();
   for (let i = 0; i < count; i += 1) {
     const sentence = pickSentence(apm);
@@ -772,7 +800,7 @@ function rejectWrongInput(typedChar) {
   updateLiveStats();
   playKeySound(false);
 
-  const activeCard = document.querySelector(`.${currentTest}-typing-card`);
+  const activeCard = document.querySelector(`.${getTestKey()}-typing-card`);
   if (activeCard) {
     activeCard.classList.remove("input-error");
     void activeCard.offsetWidth;
@@ -804,7 +832,7 @@ function setProgress(progress) {
 
   setUploadPercentValue(`${Math.round(clamped)}%`);
 
-  const checks = document.querySelectorAll(`#${currentTest}ConsoleWrapper .upload-check, #${currentTest}ConsoleWrapper .crack-checkpoint`);
+  const checks = document.querySelectorAll(`#${getTestKey()}ConsoleWrapper .upload-check, #${getTestKey()}ConsoleWrapper .crack-checkpoint`);
   checks.forEach((check, index) => {
     const isActive = clamped >= (index + 1) * 20;
     if (isActive && !check.classList.contains("active")) {
@@ -840,6 +868,58 @@ function updateLiveStats() {
   setLiveWpmValue(wpmDisplay);
   setAccuracyValue(`${stats.accuracy}%`);
   setMistakeCountValue(mistakeCount);
+
+  if (currentTest === "leaderboard") {
+    updateLivePosition(stats.apm, stats.accuracy, elapsed);
+  }
+}
+
+function getLiveLeaderboardPosition(currentApm, currentAccuracy) {
+  const scores = initLeaderboard();
+  const placeholder = { name: "Jij", apm: currentApm, accuracy: currentAccuracy };
+  const tempScores = [...scores, placeholder];
+  tempScores.sort((a, b) => {
+    const aApm = a.apm !== undefined ? a.apm : 0;
+    const bApm = b.apm !== undefined ? b.apm : 0;
+    const aAcc = a.accuracy !== undefined ? a.accuracy : 0;
+    const bAcc = b.accuracy !== undefined ? b.accuracy : 0;
+    if (bApm !== aApm) return bApm - aApm;
+    return bAcc - aAcc;
+  });
+  const idx = tempScores.findIndex(e => e === placeholder);
+  return idx + 1;
+}
+
+function updateLivePosition(currentApm, currentAccuracy, elapsed) {
+  if (elapsed < 5 && running) {
+    if (currentPositionEl) currentPositionEl.textContent = "—";
+    if (positionArrowEl) {
+      positionArrowEl.textContent = "";
+      positionArrowEl.className = "position-arrow neutral";
+    }
+    previousPosition = null;
+    return;
+  }
+
+  const currentPos = getLiveLeaderboardPosition(currentApm, currentAccuracy);
+  if (currentPositionEl) currentPositionEl.textContent = `${currentPos}e`;
+
+  if (positionArrowEl) {
+    if (previousPosition !== null) {
+      if (currentPos < previousPosition) {
+        positionArrowEl.textContent = "▲";
+        positionArrowEl.className = "position-arrow up";
+      } else if (currentPos > previousPosition) {
+        positionArrowEl.textContent = "▼";
+        positionArrowEl.className = "position-arrow down";
+      }
+    } else {
+      positionArrowEl.textContent = "";
+      positionArrowEl.className = "position-arrow neutral";
+    }
+  }
+
+  previousPosition = currentPos;
 }
 
 function updateTimer() {
@@ -899,6 +979,7 @@ function resetTest() {
   TOTAL_SECONDS = TOTAL_SECONDS_MAP[currentTest];
   finalElapsed = TOTAL_SECONDS;
   resultStats = null;
+  activePlaceholderEntry = null;
   targetWords = [];
   wordCursor = 0;
   targetText = "";
@@ -963,6 +1044,13 @@ function resetTest() {
   setAccuracyValue("100%");
   setProgress(0);
 
+  previousPosition = null;
+  if (currentPositionEl) currentPositionEl.textContent = "—";
+  if (positionArrowEl) {
+    positionArrowEl.textContent = "";
+    positionArrowEl.className = "position-arrow neutral";
+  }
+
   // Initialize and Scramble active prompt text
   const initialText = buildInitialText();
   targetWords = initialText.split(/\s+/);
@@ -1009,6 +1097,11 @@ function resetTest() {
   difficultyDropdowns.forEach(dd => {
     dd.classList.toggle("disabled", !onboardingComplete);
   });
+
+  if (currentTest === "leaderboard") {
+    if (typeof resetLeaderboardCollapseStates === "function") resetLeaderboardCollapseStates();
+    renderLeaderboard();
+  }
 }
 
 function startTest() {
@@ -1049,7 +1142,7 @@ function startTest() {
   playStartSound();
   renderPrompt();
 
-  const codePanel = document.querySelector(`#${currentTest}CodePanel`);
+  const codePanel = document.querySelector(`#${getTestKey()}CodePanel`);
   if (codePanel) {
     codePanel.animate([
       { transform: "translateY(12px)" },
@@ -1102,7 +1195,7 @@ function completeTimedTest() {
   startButton.disabled = true;
   setMissionStep("typing");
 
-  if (currentTest === "normal") {
+  if (currentTest === "normal" || currentTest === "leaderboard") {
     testReadyToFinish = true;
     finishButton.hidden = false;
     finishButton.disabled = false;
@@ -1321,7 +1414,7 @@ function revealResults() {
   let targetTitle = "Kluis gekraakt, superspion!";
   if (currentTest === "dossier") {
     targetTitle = stats.apm >= 120 ? "Dossier ontcijferd, superspion!" : (stats.coins >= 260 ? "Dossier ontcijferd, rekruut!" : "Missie voltooid, rekruut");
-  } else if (currentTest === "normal") {
+  } else if (currentTest === "normal" || currentTest === "leaderboard") {
     targetTitle = stats.apm >= 120 ? "Missie geslaagd, superspion!" : (stats.coins >= 260 ? "Missie geslaagd, rekruut" : "Missie voltooid, rekruut");
   } else {
     targetTitle = stats.apm >= 120 ? "Kluis gekraakt, superspion!" : (stats.coins >= 260 ? "Kluis gekraakt, rekruut!" : "Missie voltooid, rekruut");
@@ -1352,6 +1445,33 @@ function revealResults() {
   testReadyToFinish = false;
   showInlineComplete(stats);
 
+  if (currentTest === "leaderboard") {
+    if (typeof resetLeaderboardCollapseStates === "function") resetLeaderboardCollapseStates();
+
+    const savedName = getCookie("tm_spy_name");
+    if (savedName) {
+      const scores = initLeaderboard();
+      const newEntry = { name: savedName, apm: stats.apm, accuracy: stats.accuracy, isDefault: false, timestamp: Date.now() };
+      scores.push(newEntry);
+      scores.sort((a, b) => {
+        if (b.apm !== a.apm) return b.apm - a.apm;
+        return b.accuracy - a.accuracy;
+      });
+      saveLeaderboard(scores);
+      lastSavedScoreEntry = newEntry;
+
+      syncSpyNameUI();
+
+      const highlightIdx = scores.findIndex(e => e.name === savedName && e.apm === stats.apm && e.accuracy === stats.accuracy);
+      renderLeaderboard(highlightIdx);
+    } else {
+      syncSpyNameUI();
+
+      const placeholderEntry = { name: "Jij", apm: stats.apm, accuracy: stats.accuracy, isPlaceholder: true };
+      renderLeaderboard(-1, placeholderEntry);
+    }
+  }
+
   transitionToView(resultPanel, () => {
     const agentCard = document.querySelector(".agent-profile-badge");
     if (agentCard) {
@@ -1381,6 +1501,76 @@ function revealResults() {
     animateValue(completeMistakes, 0, stats.mistakes, 1200);
 
     renderResultCharts(stats.apm, stats.accuracy);
+
+    if (currentTest === "leaderboard") {
+      // Confetti burst!
+      if (typeof confetti === "function") {
+        confetti({
+          particleCount: 120,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+        setTimeout(() => {
+          confetti({
+            particleCount: 80,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0, y: 0.6 }
+          });
+        }, 250);
+        setTimeout(() => {
+          confetti({
+            particleCount: 80,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1, y: 0.6 }
+          });
+        }, 400);
+      }
+
+      // GSAP Animations
+      if (window.gsap) {
+        // Grow the podium pedestals
+        gsap.from("#leaderboardSectionResult .podium-pedestal", {
+          scaleY: 0,
+          transformOrigin: "bottom",
+          duration: 1.5,
+          ease: "elastic.out(1, 0.55)",
+          stagger: 0.2
+        });
+
+        // Drop the rank badges / trophies from above
+        gsap.from("#leaderboardSectionResult .podium-column .trophy-wrapper", {
+          scale: 0,
+          opacity: 0,
+          y: -40,
+          duration: 1,
+          ease: "back.out(2)",
+          delay: 0.5,
+          stagger: 0.2
+        });
+
+        // Fade in names and scores
+        gsap.from("#leaderboardSectionResult .podium-column .spy-name, #leaderboardSectionResult .podium-column .spy-score", {
+          opacity: 0,
+          y: 15,
+          duration: 0.8,
+          ease: "power2.out",
+          delay: 0.7,
+          stagger: 0.1
+        });
+
+        // Slide in leaderboard capsule rows
+        gsap.from("#leaderboardSectionResult .leaderboard-row", {
+          opacity: 0,
+          x: -30,
+          stagger: 0.08,
+          duration: 0.6,
+          ease: "power2.out",
+          delay: 1.0
+        });
+      }
+    }
 
     missionStage.scrollIntoView({
       behavior: prefersReducedMotion ? "auto" : "smooth",
@@ -1579,7 +1769,7 @@ function transitionToView(nextView, onComplete) {
 
   // Stagger next view components
   if (nextView === missionLayout) {
-    const activeConsole = document.querySelector(`#${currentTest}ConsoleWrapper`);
+    const activeConsole = document.querySelector(`#${getTestKey()}ConsoleWrapper`);
     if (activeConsole) {
       activeConsole.animate([
         { opacity: 0, transform: "translateY(30px) scale(0.98)" },
@@ -2004,8 +2194,8 @@ function clearVideoGlitch(hudElement) {
 }
 
 function charsMatch(typedChar, targetChar) {
-  if (currentTest === "normal") {
-    // Normal test is case-sensitive!
+  if (currentTest === "normal" || currentTest === "leaderboard") {
+    // Normal and Leaderboard tests are case-sensitive!
     return typedChar === targetChar;
   } else {
     // Vault and Dossier are case-insensitive
@@ -2037,6 +2227,7 @@ function switchTest(testType) {
 
   currentTest = testType;
   TOTAL_SECONDS = TOTAL_SECONDS_MAP[currentTest];
+  localStorage.setItem("tm_selected_variant", testType);
 
   // Sync Custom Dropdown UI
   if (testSelectorDropdown) {
@@ -3059,5 +3250,1498 @@ function decryptCoupon(element, targetCode) {
 // ═══════════════════════════════════════════════════════════════════
 // ENTRY INTRO RUN
 // ═══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════
+// LEADERBOARD FUNCTIONALITY
+// ═══════════════════════════════════════════════════════════════════
+
+const DEFAULT_LEADERBOARD = [
+  { name: "Miss J", apm: 210, accuracy: 99, isDefault: true, timestamp: Date.now() - 4 * 3600 * 1000 },
+  { name: "Cyber Ninja", apm: 190, accuracy: 98, isDefault: true, timestamp: Date.now() - 1 * 3600 * 1000 },
+  { name: "Agent Falcon", apm: 175, accuracy: 98, isDefault: true, timestamp: Date.now() - 8 * 3600 * 1000 },
+  { name: "Matrix Agent", apm: 160, accuracy: 95, isDefault: true, timestamp: Date.now() - 22 * 3600 * 1000 },
+  { name: "Hacker One", apm: 150, accuracy: 97, isDefault: true, timestamp: Date.now() - 1.5 * 24 * 3600 * 1000 },
+  { name: "Agent Cobra", apm: 145, accuracy: 97, isDefault: true, timestamp: Date.now() - 2 * 24 * 3600 * 1000 },
+  { name: "Prof. Qwerty", apm: 130, accuracy: 96, isDefault: true, timestamp: Date.now() - 3 * 24 * 3600 * 1000 },
+  { name: "Crypto Spy", apm: 125, accuracy: 94, isDefault: true, timestamp: Date.now() - 4 * 24 * 3600 * 1000 },
+  { name: "Agent Shadow", apm: 110, accuracy: 95, isDefault: true, timestamp: Date.now() - 5 * 24 * 3600 * 1000 },
+  { name: "Alpha Prime", apm: 105, accuracy: 93, isDefault: true, timestamp: Date.now() - 6 * 24 * 3600 * 1000 },
+  { name: "Ghost Coder", apm: 98, accuracy: 96, isDefault: true, timestamp: Date.now() - 15 * 24 * 3600 * 1000 },
+  { name: "Rekruut Bob", apm: 90, accuracy: 94, isDefault: true, timestamp: Date.now() - 10 * 24 * 3600 * 1000 },
+  { name: "Delta Force", apm: 88, accuracy: 90, isDefault: true, timestamp: Date.now() - 25 * 24 * 3600 * 1000 },
+  { name: "Rekruut Lisa", apm: 75, accuracy: 92, isDefault: true, timestamp: Date.now() - 12 * 24 * 3600 * 1000 },
+  { name: "Pixel Ranger", apm: 65, accuracy: 89, isDefault: true, timestamp: Date.now() - 45 * 24 * 3600 * 1000 }
+];
+
+let lastSavedScoreEntry = null;
+let activePlaceholderEntry = null;
+
+let leaderboardFilters = {
+  Story: { period: "all", search: "", page: 1 },
+  Play: { period: "all", search: "", page: 1 },
+  Result: { period: "all", search: "", page: 1 }
+};
+const LEADERBOARD_PAGE_SIZE = 5;
+
+// Cookie helper functions
+function setCookie(name, value, days) {
+  let expires = "";
+  if (days) {
+    let date = new Date();
+    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+    expires = "; expires=" + date.toUTCString();
+  }
+  document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
+  
+  // Sync to localStorage to support persistent sessions on local file:/// environments
+  if (value === "" || days < 0) {
+    localStorage.removeItem(name);
+  } else {
+    localStorage.setItem(name, value);
+  }
+}
+
+function getCookie(name) {
+  let nameEQ = name + "=";
+  let ca = document.cookie.split(';');
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+    if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+  }
+  
+  // Fallback to localStorage to persist state across reloads on local file:/// environments
+  return localStorage.getItem(name);
+}
+
+function initLeaderboard() {
+  let scores = localStorage.getItem("tm_leaderboard_scores");
+  let parsed = null;
+  if (scores) {
+    try {
+      parsed = JSON.parse(scores);
+    } catch(e) {}
+  }
+  // Reset or initialize if no scores, or if schema lacks timestamps, or has less than 15 items
+  if (!parsed || !Array.isArray(parsed) || parsed.length < 15 || !parsed.some(e => e.timestamp)) {
+    localStorage.setItem("tm_leaderboard_scores", JSON.stringify(DEFAULT_LEADERBOARD));
+    scores = JSON.stringify(DEFAULT_LEADERBOARD);
+    parsed = JSON.parse(scores);
+  }
+  return parsed;
+}
+
+function saveLeaderboard(scores) {
+  localStorage.setItem("tm_leaderboard_scores", JSON.stringify(scores));
+}
+
+function getTrophySvg(rank, suffix) {
+  let trophyClass = "";
+  if (rank === 1) trophyClass = "gold-trophy";
+  else if (rank === 2) trophyClass = "silver-trophy";
+  else if (rank === 3) trophyClass = "bronze-trophy";
+
+  let fill1, fill2, fill3, fill4, fill5;
+  let sparkles = "";
+
+  if (rank === 1) {
+    // Premium gold gradients
+    fill1 = "#FFE259"; fill2 = "#FFA751"; fill3 = "#FFF3A8"; fill4 = "#E48E35"; fill5 = "#B27400";
+    sparkles = `
+      <div class="sparkles-container">
+        <div class="sparkle sparkle-gold s-1">✦</div>
+        <div class="sparkle sparkle-gold s-2">★</div>
+        <div class="sparkle sparkle-gold s-3">✦</div>
+        <div class="sparkle sparkle-gold s-4">★</div>
+        <div class="sparkle sparkle-gold s-5">✦</div>
+      </div>
+    `;
+  } else if (rank === 2) {
+    // Premium silver gradients
+    fill1 = "#FFFFFF"; fill2 = "#D7DDE8"; fill3 = "#ECEFF1"; fill4 = "#B0BEC5"; fill5 = "#78909C";
+    sparkles = `
+      <div class="sparkles-container">
+        <div class="sparkle sparkle-silver s-1">✦</div>
+        <div class="sparkle sparkle-silver s-3">★</div>
+        <div class="sparkle sparkle-silver s-4">✦</div>
+      </div>
+    `;
+  } else {
+    // Premium bronze gradients
+    fill1 = "#FFD1B3"; fill2 = "#CA7345"; fill3 = "#FFCCAB"; fill4 = "#A1532F"; fill5 = "#5A2912";
+    sparkles = `
+      <div class="sparkles-container">
+        <div class="sparkle sparkle-bronze s-2">★</div>
+        <div class="sparkle sparkle-bronze s-4">✦</div>
+      </div>
+    `;
+  }
+
+  const gradId = `trophyGrad_${rank}_${suffix}`;
+  const reflectId = `metalReflect_${rank}_${suffix}`;
+  
+  return `
+    <div class="trophy-wrapper">
+      ${sparkles}
+      <svg class="trophy-svg ${trophyClass}" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="${fill1}" />
+            <stop offset="25%" stop-color="${fill2}" />
+            <stop offset="50%" stop-color="${fill3}" />
+            <stop offset="75%" stop-color="${fill4}" />
+            <stop offset="100%" stop-color="${fill5}" />
+          </linearGradient>
+          <linearGradient id="${reflectId}" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="white" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="white" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="marbleBase_${suffix}" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#1A1A1A"/>
+            <stop offset="50%" stop-color="#333333"/>
+            <stop offset="100%" stop-color="#111111"/>
+          </linearGradient>
+        </defs>
+        <!-- Wooden / Marble Base Plinth -->
+        <rect x="16" y="48" width="32" height="10" rx="2" fill="url(#marbleBase_${suffix})" stroke="#222" stroke-width="1.5" />
+        <!-- Gold base plate -->
+        <rect x="25" y="50" width="14" height="6" rx="1" fill="url(#${gradId})" />
+        
+        <!-- Pedestal Stem -->
+        <path d="M26 38h12c0 0 0 5-2 10H30c-2-5-2-10-2-10z" fill="${fill4}" />
+        <path d="M28 44h8v4h-8z" fill="url(#${gradId})" />
+        
+        <!-- Trophy Handles (elegant curved loop style) -->
+        <!-- Left Handle -->
+        <path d="M16 16c-6 0-8 6-8 12s5 10 9 10c1 0 1-2 0-2c-3 0-7-4-7-8s3-10 6-10" fill="${fill4}" />
+        <!-- Right Handle -->
+        <path d="M48 16c6 0 8 6 8 12s-5 10-9 10c-1 0-1-2 0-2c3 0 7-4 7-8s-3-10-6-10" fill="${fill4}" />
+        
+        <!-- Main Cup Body -->
+        <path d="M16 12h32v16c0 8.8-7.2 16-16 16s-16-7.2-16-16V12z" fill="url(#${gradId})" />
+        
+        <!-- Cup Rim (gives it 3D depth) -->
+        <ellipse cx="32" cy="12" rx="16" ry="3.5" fill="${fill4}" />
+        <ellipse cx="32" cy="12" rx="14" ry="2.2" fill="${fill5}" />
+        
+        <!-- Shiny metallic highlights on the cup -->
+        <!-- Left vertical gloss -->
+        <path d="M20 14h3v24h-3z" fill="#FFF" opacity="0.35" />
+        <!-- Central light accent -->
+        <path d="M30 14h2v28h-2z" fill="#FFF" opacity="0.2" />
+        
+        <!-- Emblem: Embossed Star -->
+        <path d="M32 18l1.8 3.6 4 .6-2.9 2.8.7 4-3.6-1.9-3.6 1.9.7-4-2.9-2.8 4-.6z" fill="#FFF" opacity="0.9" />
+      </svg>
+      <div class="trophy-shadow"></div>
+    </div>
+  `;}
+
+function syncSpyNameUI() {
+  const savedName = getCookie("tm_spy_name");
+
+  ["Story", "Play", "Result"].forEach(view => {
+    const form = document.querySelector(`#leaderboardForm${view}`);
+    const savedMsg = document.querySelector(`#leaderboardSavedMessage${view}`);
+    const displaySpyName = document.querySelector(`#savedSpyNameDisplay${view}`);
+    const nameInput = document.querySelector(`#leaderboardNameInput${view}`);
+    const feedbackEl = document.querySelector(`#leaderboardFeedback${view}`);
+
+    if (feedbackEl) {
+      feedbackEl.style.display = "none";
+      feedbackEl.textContent = "";
+    }
+
+    if (savedName) {
+      if (form) form.style.display = "none";
+      if (savedMsg) savedMsg.style.display = "inline-flex";
+      if (displaySpyName) displaySpyName.textContent = savedName;
+    } else {
+      if (view === "Result") {
+        if (form) form.style.display = "block";
+      } else {
+        if (form) form.style.display = "none";
+      }
+      if (savedMsg) savedMsg.style.display = "none";
+      if (nameInput) nameInput.value = "";
+    }
+  });
+}
+
+function renderLeaderboard(highlightIndex = -1, placeholderEntry = null) {
+  const scores = initLeaderboard();
+  
+  if (placeholderEntry !== null) {
+    activePlaceholderEntry = placeholderEntry;
+  }
+  if (highlightIndex !== -1) {
+    activePlaceholderEntry = null;
+  }
+  
+  // Auto-focus page jumping logic when score is saved or placeholder shown
+  if (highlightIndex !== -1) {
+    const targetPage = highlightIndex >= 3 ? Math.floor((highlightIndex - 3) / LEADERBOARD_PAGE_SIZE) + 1 : 1;
+    ["Story", "Play", "Result"].forEach(key => {
+      leaderboardFilters[key].period = "all";
+      leaderboardFilters[key].search = "";
+      leaderboardFilters[key].page = targetPage;
+
+      // Sync DOM elements
+      const searchInp = document.querySelector(`#leaderboardSearch${key}`);
+      if (searchInp) searchInp.value = "";
+      const tabs = document.querySelectorAll(`#leaderboardSection${key} .tab-btn`);
+      tabs.forEach(btn => {
+        if (btn.getAttribute("data-period") === "all") btn.classList.add("active");
+        else btn.classList.remove("active");
+      });
+    });
+  } else if (placeholderEntry) {
+    // When the placeholder is first rendered, default results page to Page 1
+    // so they see the top 5 competitors immediately and see a fully populated leaderboard.
+    leaderboardFilters.Result.period = "all";
+    leaderboardFilters.Result.search = "";
+    leaderboardFilters.Result.page = 1;
+    
+    const searchInp = document.querySelector("#leaderboardSearchResult");
+    if (searchInp) searchInp.value = "";
+    const tabs = document.querySelectorAll("#leaderboardSectionResult .tab-btn");
+    tabs.forEach(btn => {
+      if (btn.getAttribute("data-period") === "all") btn.classList.add("active");
+      else btn.classList.remove("active");
+    });
+  }
+
+  const views = [
+    { key: "Story", bodySel: "#leaderboardBodyStory", podiumSel: "#leaderboardPodiumStory", previewSel: "#leaderboardMiniPodiumStory", showPlaceholder: false, suffix: "story" },
+    { key: "Play", bodySel: "#leaderboardBodyPlay", podiumSel: "#leaderboardPodiumPlay", previewSel: "#leaderboardMiniPodiumPlay", showPlaceholder: false, suffix: "play" },
+    { key: "Result", bodySel: "#leaderboardBodyResult", podiumSel: "#leaderboardPodiumResult", previewSel: "#leaderboardMiniPodiumResult", showPlaceholder: true, suffix: "result" }
+  ];
+
+  views.forEach(view => {
+    let viewScores = [...scores];
+    let activeHighlightIndex = highlightIndex;
+
+    if (view.showPlaceholder && activePlaceholderEntry) {
+      viewScores.push(activePlaceholderEntry);
+      viewScores.sort((a, b) => {
+        const aApm = a.apm !== undefined ? a.apm : 0;
+        const bApm = b.apm !== undefined ? b.apm : 0;
+        const aAcc = a.accuracy !== undefined ? a.accuracy : 0;
+        const bAcc = b.accuracy !== undefined ? b.accuracy : 0;
+        if (bApm !== aApm) return bApm - aApm;
+        return bAcc - aAcc;
+      });
+      if (activePlaceholderEntry.isPlaceholder) {
+        activeHighlightIndex = viewScores.findIndex(e => e.isPlaceholder);
+      }
+    } else {
+      viewScores.sort((a, b) => {
+        const aApm = a.apm !== undefined ? a.apm : 0;
+        const bApm = b.apm !== undefined ? b.apm : 0;
+        const aAcc = a.accuracy !== undefined ? a.accuracy : 0;
+        const bAcc = b.accuracy !== undefined ? b.accuracy : 0;
+        if (bApm !== aApm) return bApm - aApm;
+        return bAcc - aAcc;
+      });
+    }
+
+    // 1. Timeframe filtering
+    const now = Date.now();
+    const filterState = leaderboardFilters[view.key];
+    const period = filterState.period;
+
+    let timeframeFiltered = [...viewScores];
+    if (period === "daily") {
+      timeframeFiltered = timeframeFiltered.filter(e => e.isPlaceholder || (e.timestamp && (now - e.timestamp <= 24 * 3600 * 1000)));
+    } else if (period === "weekly") {
+      timeframeFiltered = timeframeFiltered.filter(e => e.isPlaceholder || (e.timestamp && (now - e.timestamp <= 7 * 24 * 3600 * 1000)));
+    } else if (period === "monthly") {
+      timeframeFiltered = timeframeFiltered.filter(e => e.isPlaceholder || (e.timestamp && (now - e.timestamp <= 30 * 24 * 3600 * 1000)));
+    }
+
+    // Sort timeframeFiltered just to be safe
+    timeframeFiltered.sort((a, b) => {
+      const aApm = a.apm !== undefined ? a.apm : 0;
+      const bApm = b.apm !== undefined ? b.apm : 0;
+      const aAcc = a.accuracy !== undefined ? a.accuracy : 0;
+      const bAcc = b.accuracy !== undefined ? b.accuracy : 0;
+      if (bApm !== aApm) return bApm - aApm;
+      return bAcc - aAcc;
+    });
+
+    // Find new active highlight index in the timeframeFiltered list
+    let viewHighlightIdx = -1;
+    if (activePlaceholderEntry && view.showPlaceholder) {
+      viewHighlightIdx = timeframeFiltered.findIndex(e => e.isPlaceholder);
+    } else {
+      let targetHighlightIndex = highlightIndex;
+      if (targetHighlightIndex === -1) {
+        const savedName = getCookie("tm_spy_name");
+        if (savedName) {
+          const userScores = timeframeFiltered
+            .map((entry, idx) => ({ entry, idx }))
+            .filter(x => x.entry.name && x.entry.name.toLowerCase() === savedName.toLowerCase() && !x.entry.isPlaceholder);
+          if (userScores.length > 0) {
+            userScores.sort((a, b) => {
+              const aApm = a.entry.apm !== undefined ? a.entry.apm : 0;
+              const bApm = b.entry.apm !== undefined ? b.entry.apm : 0;
+              const aAcc = a.entry.accuracy !== undefined ? a.entry.accuracy : 0;
+              const bAcc = b.entry.accuracy !== undefined ? b.entry.accuracy : 0;
+              if (bApm !== aApm) return bApm - aApm;
+              return bAcc - aAcc;
+            });
+            viewHighlightIdx = userScores[0].idx;
+          }
+        }
+      } else if (highlightIndex !== -1 && highlightIndex < scores.length) {
+        const targetEntry = scores[highlightIndex];
+        viewHighlightIdx = timeframeFiltered.findIndex(e => e === targetEntry);
+      }
+    }
+
+    // 2. Render preview badges (always reflect overall timeframe, unaffected by active searches)
+    if (typeof renderPreviewBadges === "function") {
+      renderPreviewBadges(timeframeFiltered, viewHighlightIdx, view.previewSel);
+    }
+
+    // 3. Render podium
+    const podiumEl = document.querySelector(view.podiumSel);
+    const searchVal = filterState.search.toLowerCase().trim();
+
+    if (podiumEl) {
+      if (searchVal) {
+        podiumEl.style.display = "none";
+      } else {
+        podiumEl.style.display = "flex";
+        
+        const top3 = timeframeFiltered.slice(0, 3);
+        while (top3.length < 3) {
+          top3.push({ name: "—", apm: 0, accuracy: 0 });
+        }
+
+        // Podium order: 2nd (left), 1st (middle), 3rd (right)
+        const podiumOrder = [
+          { entry: top3[1], rank: 2, className: "second" },
+          { entry: top3[0], rank: 1, className: "first" },
+          { entry: top3[2], rank: 3, className: "third" }
+        ];
+
+        const podiumHtml = podiumOrder.map(item => {
+          let colClasses = `podium-column ${item.className}`;
+          if (item.entry.isPlaceholder) {
+            colClasses += " placeholder-column user-highlight";
+          } else {
+            const itemIndexInTimeframe = timeframeFiltered.findIndex(e => e === item.entry);
+            if (itemIndexInTimeframe !== -1 && itemIndexInTimeframe === viewHighlightIdx) {
+              colClasses += " user-highlight";
+            }
+          }
+
+          const entryApm = item.entry.apm !== undefined ? item.entry.apm : 0;
+          const entryAcc = item.entry.accuracy !== undefined ? item.entry.accuracy : 0;
+          const trophyHtml = entryApm > 0 ? getTrophySvg(item.rank, view.suffix) : '<div style="height:90px;"></div>';
+
+          return `
+            <div class="${colClasses}">
+              <div class="avatar-badge">${trophyHtml}</div>
+              <div class="spy-name">${escapeHTML(item.entry.name)}</div>
+              <div class="spy-score">${entryApm > 0 ? `${entryApm} APM` : '—'}</div>
+              <div class="podium-pedestal">
+                <span class="podium-number">${item.rank}</span>
+                ${entryAcc > 0 ? `<span class="podium-accuracy-sub">${entryAcc}% acc</span>` : ''}
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        podiumEl.innerHTML = podiumHtml;
+      }
+    }
+
+    // 4. Render list rows (pagination applied)
+    const bodyEl = document.querySelector(view.bodySel);
+    if (bodyEl) {
+      bodyEl.innerHTML = "";
+      
+      let listScores = [];
+      if (searchVal) {
+        listScores = timeframeFiltered.filter(e => e.name && e.name.toLowerCase().includes(searchVal));
+      } else {
+        listScores = timeframeFiltered.slice(3); // skip top 3 when not searching
+      }
+
+      const totalRows = listScores.length;
+      const totalPages = Math.max(1, Math.ceil(totalRows / LEADERBOARD_PAGE_SIZE));
+
+      // Clamp current page
+      filterState.page = Math.min(Math.max(1, filterState.page), totalPages);
+      const currentPage = filterState.page;
+
+      const startIdx = (currentPage - 1) * LEADERBOARD_PAGE_SIZE;
+      const endIdx = startIdx + LEADERBOARD_PAGE_SIZE;
+      const pageScores = listScores.slice(startIdx, endIdx);
+
+      if (pageScores.length === 0) {
+        const noDataRow = document.createElement("div");
+        noDataRow.style.textAlign = "center";
+        noDataRow.style.padding = "20px";
+        noDataRow.style.color = "var(--muted)";
+        noDataRow.style.fontFamily = "Orbitron, sans-serif";
+        noDataRow.style.fontSize = "0.9rem";
+        noDataRow.textContent = "GEEN AGENTEN GEVONDEN";
+        bodyEl.appendChild(noDataRow);
+      } else {
+        pageScores.forEach((entry, idx) => {
+          const row = document.createElement("div");
+          row.className = "leaderboard-row";
+
+          // Find original index in timeframeFiltered to show its true rank
+          const originalIdxInTimeframe = timeframeFiltered.findIndex(e => e === entry);
+          if (entry.isPlaceholder) {
+            row.className += " placeholder-row user-highlight";
+          } else if (originalIdxInTimeframe !== -1 && originalIdxInTimeframe === viewHighlightIdx) {
+            row.className += " user-highlight";
+          }
+
+          const rankDisplay = originalIdxInTimeframe !== -1 ? originalIdxInTimeframe + 1 : "—";
+          const entryApm = entry.apm !== undefined ? entry.apm : 0;
+          const entryAcc = entry.accuracy !== undefined ? entry.accuracy : 0;
+
+          row.innerHTML = `
+            <div class="col-rank">${rankDisplay}</div>
+            <div class="col-name">${escapeHTML(entry.name)}</div>
+            <div class="col-wpm">${entryApm}</div>
+            <div class="col-accuracy">${entryAcc}%</div>
+          `;
+          bodyEl.appendChild(row);
+        });
+      }
+
+      // Update Pagination buttons state and info
+      const prevBtn = document.querySelector(`#leaderboardPrevBtn${view.key}`);
+      const nextBtn = document.querySelector(`#leaderboardNextBtn${view.key}`);
+      const pageInfo = document.querySelector(`#leaderboardPageInfo${view.key}`);
+
+      if (prevBtn) prevBtn.disabled = currentPage === 1;
+      if (nextBtn) nextBtn.disabled = currentPage === totalPages;
+      if (pageInfo) pageInfo.textContent = `Pagina ${currentPage} van ${totalPages}`;
+    }
+  });
+}
+
+function escapeHTML(str) {
+  if (str === null || str === undefined) return "Anonieme Spion";
+  return String(str).replace(/[&<>'"]/g, 
+    tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+  );
+}
+
+// Bind Submit Button Event Listener (Result screen only)
+const leaderboardSubmitBtnResult = document.querySelector("#leaderboardSubmitBtnResult");
+const leaderboardNameInputResult = document.querySelector("#leaderboardNameInputResult");
+
+if (leaderboardSubmitBtnResult && leaderboardNameInputResult) {
+  leaderboardSubmitBtnResult.addEventListener("click", () => {
+    const name = leaderboardNameInputResult.value.trim();
+    const feedbackEl = document.querySelector("#leaderboardFeedbackResult");
+
+    if (feedbackEl) {
+      feedbackEl.style.display = "none";
+      feedbackEl.textContent = "";
+    }
+
+    if (!name) {
+      if (feedbackEl) {
+        feedbackEl.className = "leaderboard-feedback error";
+        feedbackEl.textContent = "Vul een geldige spionnennaam in!";
+        feedbackEl.style.display = "flex";
+      } else {
+        alert("Vul een spionnennaam in!");
+      }
+      return;
+    }
+
+    // Check for duplicates
+    const scores = initLeaderboard();
+    const nameExists = scores.some(e => e.name.toLowerCase() === name.toLowerCase());
+    if (nameExists) {
+      if (feedbackEl) {
+        feedbackEl.className = "leaderboard-feedback error";
+        feedbackEl.textContent = "Deze spionnennaam is al bezet. Kies een unieke naam!";
+        feedbackEl.style.display = "flex";
+      } else {
+        alert("Deze spionnennaam is al bezet. Kies een unieke naam!");
+      }
+      return;
+    }
+
+    const stats = resultStats || getTypedStats(finalElapsed);
+    
+    // Add new score
+    const newEntry = { name: name, apm: stats.apm, accuracy: stats.accuracy, isDefault: false, timestamp: Date.now() };
+    scores.push(newEntry);
+    
+    // Sort and save
+    scores.sort((a, b) => {
+      if (b.apm !== a.apm) return b.apm - a.apm;
+      return b.accuracy - a.accuracy;
+    });
+
+    saveLeaderboard(scores);
+    lastSavedScoreEntry = newEntry;
+
+    // Set cookie to remember name
+    setCookie("tm_spy_name", name, 365);
+    
+    // Find index of new entry to highlight it
+    const highlightIdx = scores.findIndex(e => e.name === name && e.apm === stats.apm && e.accuracy === stats.accuracy);
+    
+    syncSpyNameUI();
+    renderLeaderboard(highlightIdx);
+  });
+}
+
+// Bind Change Name Button Event Listeners for all screens
+["Story", "Play", "Result"].forEach(view => {
+  const btn = document.querySelector(`#changeSpyNameBtn${view}`);
+  if (btn) {
+    btn.addEventListener("click", () => {
+      // Delete cookie
+      setCookie("tm_spy_name", "", -1);
+
+      // Remove last saved entry from local storage if exists
+      if (lastSavedScoreEntry) {
+        const scores = initLeaderboard();
+        const matchIdx = scores.findIndex(e => e.name === lastSavedScoreEntry.name && e.apm === lastSavedScoreEntry.apm && e.accuracy === lastSavedScoreEntry.accuracy);
+        if (matchIdx !== -1) {
+          scores.splice(matchIdx, 1);
+          saveLeaderboard(scores);
+        }
+        lastSavedScoreEntry = null;
+      }
+
+      // Sync UI across all screens
+      syncSpyNameUI();
+
+      // Focus Result input form name field if it exists
+      const nameInputResult = document.querySelector("#leaderboardNameInputResult");
+      if (nameInputResult) {
+        nameInputResult.value = "";
+        nameInputResult.focus();
+      }
+
+      // Re-render with Jij placeholder if there is an active session score
+      if (resultStats) {
+        const placeholderEntry = { name: "Jij", apm: resultStats.apm, accuracy: resultStats.accuracy, isPlaceholder: true };
+        renderLeaderboard(-1, placeholderEntry);
+      } else {
+        renderLeaderboard(-1, null);
+      }
+    });
+  }
+});
+
+function renderPreviewBadges(scoresList, highlightIdx, containerSelector) {
+  const container = document.querySelector(containerSelector);
+  if (!container) return;
+  container.innerHTML = "";
+
+  const top3 = scoresList.slice(0, 3);
+  while (top3.length < 3) {
+    top3.push({ name: "—", apm: 0, accuracy: 0 });
+  }
+
+  const suffix = containerSelector.replace("#leaderboardMiniPodium", "").toLowerCase(); // "story", "play", "result"
+
+  // Create mini-podium-wrapper
+  const podiumWrapper = document.createElement("div");
+  podiumWrapper.className = "mini-podium-wrapper";
+
+  // Podium order: 2nd (left), 1st (middle), 3rd (right)
+  const podiumOrder = [
+    { entry: top3[1], rank: 2, className: "second" },
+    { entry: top3[0], rank: 1, className: "first" },
+    { entry: top3[2], rank: 3, className: "third" }
+  ];
+
+  const podiumHtml = podiumOrder.map(item => {
+    let colClasses = `mini-podium-column ${item.className}`;
+    const entryApm = item.entry.apm !== undefined ? item.entry.apm : 0;
+    const isPlaceholder = item.entry.isPlaceholder;
+
+    // Check if this column is highlighted
+    const itemIndexInScores = scoresList.findIndex(e => e === item.entry);
+    if (isPlaceholder || (itemIndexInScores !== -1 && itemIndexInScores === highlightIdx)) {
+      colClasses += " user-highlight";
+    }
+
+    const nameDisplay = item.entry.name || "—";
+    const apmDisplay = entryApm > 0 ? `${entryApm} APM` : "—";
+    const trophyHtml = entryApm > 0 ? getTrophySvg(item.rank, `mini_${suffix}`) : '<div style="height:44px;"></div>';
+
+    return `
+      <div class="${colClasses}">
+        <div class="mini-avatar-trophy">${trophyHtml}</div>
+        <div class="mini-name">${escapeHTML(nameDisplay)}</div>
+        <div class="mini-score">${apmDisplay}</div>
+        <div class="mini-pedestal">${item.rank}</div>
+      </div>
+    `;
+  }).join("");
+
+  podiumWrapper.innerHTML = podiumHtml;
+  container.appendChild(podiumWrapper);
+
+  // If the user stands at rank >= 4 (index >= 3), append their user standing badge
+  if (highlightIdx >= 3 && highlightIdx < scoresList.length) {
+    const userEntry = scoresList[highlightIdx];
+    const userBadge = document.createElement("div");
+    userBadge.className = "mini-user-badge";
+
+    const name = userEntry.name || "Jij";
+    const apm = userEntry.apm !== undefined ? userEntry.apm : 0;
+    const rank = highlightIdx + 1;
+
+    userBadge.innerHTML = `
+      <span class="mini-user-rank">#${rank}</span>
+      <span>${escapeHTML(name)} (${apm})</span>
+    `;
+    container.appendChild(userBadge);
+  }
+
+  // Update middle status HUD
+  const statusEl = document.querySelector(containerSelector.replace("MiniPodium", "Status"));
+  if (statusEl) {
+    const savedName = getCookie("tm_spy_name");
+    
+    // Find user's best score in scoresList (ignoring placeholders)
+    const userEntries = scoresList.filter(e => e.name && savedName && e.name.toLowerCase() === savedName.toLowerCase() && !e.isPlaceholder);
+    
+    if (userEntries.length > 0) {
+      userEntries.sort((a, b) => b.apm - a.apm);
+      const bestEntry = userEntries[0];
+      const overallRank = scoresList.findIndex(e => e === bestEntry) + 1;
+      
+      statusEl.innerHTML = `
+        <div class="status-hud-title">
+          <span class="radar-pulse-dot"></span>
+          Verbinding Actief
+        </div>
+        <p class="status-hud-desc">
+          Agent <strong>${escapeHTML(savedName)}</strong> staat op plek <strong>#${overallRank}</strong> met <strong>${bestEntry.apm} APM</strong>!
+        </p>
+      `;
+    } else {
+      statusEl.innerHTML = `
+        <div class="status-hud-title">
+          <span class="radar-pulse-dot" style="background-color: var(--orange); box-shadow: 0 0 6px var(--orange); animation-name: radarPulseOrange;"></span>
+          Huidige Missie
+        </div>
+        <p class="status-hud-desc">
+          Type de test en claim je positie op de ranglijst!
+        </p>
+      `;
+    }
+  }
+}
+
+function toggleLeaderboard(view, targetState) {
+  const container = document.querySelector(`#leaderboardSection${view}`);
+  const preview = document.querySelector(`#leaderboardPreview${view}`);
+  const expanded = document.querySelector(`#leaderboardExpanded${view}`);
+  
+  if (!container || !preview || !expanded) return;
+
+  const isExpanded = targetState === "expanded";
+
+  if (isExpanded) {
+    container.classList.remove("collapsed");
+    
+    if (window.gsap) {
+      container.style.transition = "none";
+      preview.style.transition = "none";
+      const ranks = ["first", "second", "third"];
+
+      // Kill any lingering tweens
+      gsap.killTweensOf(preview);
+      gsap.killTweensOf(expanded);
+      gsap.killTweensOf(container);
+      
+      const miniWrapper = preview.querySelector(".mini-podium-wrapper");
+      const expandBtn = preview.querySelector(".leaderboard-expand-btn");
+      const userBadge = preview.querySelector(".mini-user-badge");
+      const statusBtn = preview.querySelector(".leaderboard-preview-status");
+
+      if (miniWrapper) gsap.killTweensOf(miniWrapper);
+      if (expandBtn) gsap.killTweensOf(expandBtn);
+      if (userBadge) gsap.killTweensOf(userBadge);
+      if (statusBtn) gsap.killTweensOf(statusBtn);
+
+      ranks.forEach(rank => {
+        const bigCol = expanded.querySelector(`.podium-column.${rank}`);
+        if (bigCol) {
+          gsap.killTweensOf(bigCol);
+          gsap.set(bigCol, { clearProps: "all" });
+          const pedestal = bigCol.querySelector(".podium-pedestal");
+          if (pedestal) {
+            gsap.killTweensOf(pedestal);
+            gsap.set(pedestal, { clearProps: "all" });
+          }
+        }
+      });
+
+      // Calculate slide offset for miniWrapper to slide to center
+      let slideX = 0;
+      if (miniWrapper) {
+        const frameRect = preview.getBoundingClientRect();
+        const wrapperRect = miniWrapper.getBoundingClientRect();
+        const currentLeft = wrapperRect.left - frameRect.left;
+        const targetLeft = (frameRect.width - wrapperRect.width) / 2;
+        slideX = targetLeft - currentLeft;
+      }
+
+      // Create timeline for initial slide
+      const tl = gsap.timeline();
+
+      // PHASE 1: Fade out expand button, user badge, and status HUD, and slide mini podium to the center
+      if (expandBtn) {
+        tl.to(expandBtn, { opacity: 0, x: 20, duration: 0.22, ease: "power2.in" }, 0);
+      }
+      if (userBadge) {
+        tl.to(userBadge, { opacity: 0, x: 20, duration: 0.22, ease: "power2.in" }, 0);
+      }
+      if (statusBtn) {
+        tl.to(statusBtn, { opacity: 0, scale: 0.9, duration: 0.22, ease: "power2.in" }, 0);
+      }
+      if (miniWrapper) {
+        tl.to(miniWrapper, { x: slideX, duration: 0.45, ease: "power2.inOut" }, 0.05);
+      }
+
+      // PHASE 2: Scale up mini-podium and drop down while growing the container
+      tl.add(() => {
+        // Capture current container height (= preview frame height)
+        const previewHeight = container.offsetHeight;
+
+        // Float the preview on top so it overlays the expanding content
+        container.style.position = "relative";
+        preview.style.position = "absolute";
+        preview.style.top = "0";
+        preview.style.left = "0";
+        preview.style.right = "0";
+        preview.style.zIndex = "10";
+        preview.style.pointerEvents = "none";
+        preview.style.background = "transparent";
+        preview.style.overflow = "visible";
+
+        // Show expanded content underneath at natural height to measure it
+        expanded.style.display = "block";
+        expanded.style.opacity = "1";
+        expanded.style.height = "auto";
+        expanded.style.overflow = "visible";
+        expanded.style.paddingTop = "30px";
+        expanded.style.paddingBottom = "30px";
+
+        // Measure the full natural height of expanded
+        const expandedNaturalHeight = expanded.offsetHeight;
+
+        // Lock container to preview height, overflow visible during transition to prevent clipping
+        container.style.height = `${previewHeight}px`;
+        container.style.overflow = "visible";
+
+        // Get sub-elements
+        const podiumCols = ranks.map(r => expanded.querySelector(`.podium-column.${r}`)).filter(Boolean);
+        const pedestals = podiumCols.map(col => col.querySelector(".podium-pedestal")).filter(Boolean);
+
+        const header = expanded.querySelector(".leaderboard-header");
+        const tabs = expanded.querySelector(".leaderboard-tabs");
+        const search = expanded.querySelector(".leaderboard-search");
+        const list = expanded.querySelector(".leaderboard-list");
+        const pagination = expanded.querySelector(".leaderboard-pagination");
+        const bigW = expanded.querySelector(".podium-wrapper");
+
+        // Set initial states: big podium columns invisible (but scale 1), other elements invisible
+        podiumCols.forEach(col => {
+          gsap.set(col, { opacity: 0, scale: 1 });
+        });
+        pedestals.forEach(ped => {
+          gsap.set(ped, { scaleY: 1 });
+        });
+        if (header) gsap.set(header, { opacity: 0, y: -20 });
+        if (tabs) gsap.set(tabs, { opacity: 0, x: -30 });
+        if (search) gsap.set(search, { opacity: 0, x: 30 });
+        if (list) gsap.set(list, { opacity: 0, y: 30 });
+        if (pagination) gsap.set(pagination, { opacity: 0, y: 30 });
+
+        // Build the entrance timeline
+        const entranceTl = gsap.timeline({
+          onComplete: () => {
+            // Clean up all temporary overrides
+            preview.style.display = "none";
+            preview.style.position = "";
+            preview.style.top = "";
+            preview.style.left = "";
+            preview.style.right = "";
+            preview.style.zIndex = "";
+            preview.style.pointerEvents = "";
+            preview.style.opacity = "";
+            preview.style.background = "";
+            preview.style.overflow = "";
+            preview.style.transition = "";
+            if (miniWrapper) gsap.set(miniWrapper, { clearProps: "all" });
+            if (expandBtn) gsap.set(expandBtn, { clearProps: "all" });
+            if (userBadge) gsap.set(userBadge, { clearProps: "all" });
+            if (statusBtn) gsap.set(statusBtn, { clearProps: "all" });
+
+            container.style.height = "";
+            container.style.overflow = "";
+            container.style.position = "";
+            container.style.transition = "";
+            expanded.style.height = "";
+            expanded.style.overflow = "";
+            expanded.style.paddingTop = "";
+            expanded.style.paddingBottom = "";
+            podiumCols.forEach(col => gsap.set(col, { clearProps: "all" }));
+            pedestals.forEach(ped => gsap.set(ped, { clearProps: "all" }));
+            
+            ranks.forEach(rank => {
+              const mCol = preview.querySelector(`.mini-podium-column.${rank}`);
+              if (mCol) {
+                const mTrophy = mCol.querySelector(".mini-avatar-trophy");
+                const mPed = mCol.querySelector(".mini-pedestal");
+                const mName = mCol.querySelector(".mini-name");
+                const mScore = mCol.querySelector(".mini-score");
+                if (mTrophy) {
+                  gsap.set(mTrophy, { clearProps: "all" });
+                  const mSvg = mTrophy.querySelector(".trophy-svg");
+                  if (mSvg) gsap.set(mSvg, { clearProps: "all" });
+                }
+                if (mPed) gsap.set(mPed, { clearProps: "all" });
+                if (mName) gsap.set(mName, { clearProps: "all" });
+                if (mScore) gsap.set(mScore, { clearProps: "all" });
+              }
+            });
+
+            if (header) gsap.set(header, { clearProps: "all" });
+            if (tabs) gsap.set(tabs, { clearProps: "all" });
+            if (search) gsap.set(search, { clearProps: "all" });
+            if (list) gsap.set(list, { clearProps: "all" });
+            if (pagination) gsap.set(pagination, { clearProps: "all" });
+          }
+        });
+
+        // Step A: Grow container height smoothly
+        entranceTl.to(container, {
+          height: expandedNaturalHeight,
+          duration: 0.7,
+          ease: "power2.inOut"
+        }, 0);
+
+        // Step B: Morph sub-elements of mini-podium individually to match big podium
+        ranks.forEach(rank => {
+          const mCol = preview.querySelector(`.mini-podium-column.${rank}`);
+          const bCol = expanded.querySelector(`.podium-column.${rank}`);
+          if (mCol && bCol) {
+            const mTrophy = mCol.querySelector(".mini-avatar-trophy");
+            const bTrophy = bCol.querySelector(".avatar-badge");
+            const mPed = mCol.querySelector(".mini-pedestal");
+            const bPed = bCol.querySelector(".podium-pedestal");
+            const mName = mCol.querySelector(".mini-name");
+            const mScore = mCol.querySelector(".mini-score");
+            const bName = bCol.querySelector(".spy-name");
+            const bScore = bCol.querySelector(".spy-score");
+
+            // Morph name (uniform scale)
+            if (mName && bName) {
+              const rectMini = mName.getBoundingClientRect();
+              const rectBig = bName.getBoundingClientRect();
+              if (rectMini.width > 0 && rectBig.width > 0) {
+                const scale = rectBig.height / rectMini.height;
+                const deltaX = (rectBig.left + rectBig.width / 2) - (rectMini.left + rectMini.width / 2);
+                const deltaY = (rectBig.top + rectBig.height / 2) - (rectMini.top + rectMini.height / 2);
+
+                entranceTl.to(mName, {
+                  x: `+=${deltaX}`,
+                  y: `+=${deltaY}`,
+                  scale: scale,
+                  transformOrigin: "center center",
+                  duration: 0.7,
+                  ease: "power2.inOut"
+                }, 0);
+              }
+            }
+
+            // Morph score (uniform scale)
+            if (mScore && bScore) {
+              const rectMini = mScore.getBoundingClientRect();
+              const rectBig = bScore.getBoundingClientRect();
+              if (rectMini.width > 0 && rectBig.width > 0) {
+                const scale = rectBig.height / rectMini.height;
+                const deltaX = (rectBig.left + rectBig.width / 2) - (rectMini.left + rectMini.width / 2);
+                const deltaY = (rectBig.top + rectBig.height / 2) - (rectMini.top + rectMini.height / 2);
+
+                entranceTl.to(mScore, {
+                  x: `+=${deltaX}`,
+                  y: `+=${deltaY}`,
+                  scale: scale,
+                  transformOrigin: "center center",
+                  duration: 0.7,
+                  ease: "power2.inOut"
+                }, 0);
+              }
+            }
+
+            // Morph trophy (uniform scale on .trophy-svg to preserve aspect ratio)
+            if (mTrophy && bTrophy) {
+              const mSvg = mTrophy.querySelector(".trophy-svg") || mTrophy;
+              const bSvg = bTrophy.querySelector(".trophy-svg") || bTrophy;
+              const rectMini = mSvg.getBoundingClientRect();
+              const rectBig = bSvg.getBoundingClientRect();
+              if (rectMini.width > 0 && rectBig.width > 0) {
+                const scale = rectBig.height / rectMini.height;
+                const deltaX = (rectBig.left + rectBig.width / 2) - (rectMini.left + rectMini.width / 2);
+                const deltaY = (rectBig.top + rectBig.height / 2) - (rectMini.top + rectMini.height / 2);
+
+                entranceTl.to(mTrophy, {
+                  x: `+=${deltaX}`,
+                  y: `+=${deltaY}`,
+                  scale: scale,
+                  transformOrigin: "center center",
+                  duration: 0.7,
+                  ease: "power2.inOut"
+                }, 0);
+              }
+            }
+
+            // Morph pedestal
+            if (mPed && bPed) {
+              const rectMini = mPed.getBoundingClientRect();
+              const rectBig = bPed.getBoundingClientRect();
+              if (rectMini.width > 0 && rectBig.width > 0) {
+                const scaleX = rectBig.width / rectMini.width;
+                const scaleY = rectBig.height / rectMini.height;
+                const deltaX = (rectBig.left + rectBig.width / 2) - (rectMini.left + rectMini.width / 2);
+                const deltaY = (rectBig.top + rectBig.height / 2) - (rectMini.top + rectMini.height / 2);
+
+                entranceTl.to(mPed, {
+                  x: `+=${deltaX}`,
+                  y: `+=${deltaY}`,
+                  scaleX: scaleX,
+                  scaleY: scaleY,
+                  transformOrigin: "center center",
+                  duration: 0.7,
+                  ease: "power2.inOut"
+                }, 0);
+              }
+            }
+          }
+        });
+
+        // Step C: Quick cross-fade when positions match (ends exactly at 0.7s)
+        if (miniWrapper) {
+          entranceTl.to(miniWrapper, {
+            opacity: 0,
+            duration: 0.15,
+            ease: "power2.out"
+          }, 0.55);
+        }
+        podiumCols.forEach(col => {
+          entranceTl.to(col, {
+            opacity: 1,
+            duration: 0.15,
+            ease: "power2.out"
+          }, 0.55);
+        });
+
+        // Step D: Fade and slide in remaining elements from edges
+        if (header) {
+          entranceTl.to(header, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" }, 0.5);
+        }
+        if (tabs) {
+          entranceTl.to(tabs, { opacity: 1, x: 0, duration: 0.35, ease: "power2.out" }, 0.5);
+        }
+        if (search) {
+          entranceTl.to(search, { opacity: 1, x: 0, duration: 0.35, ease: "power2.out" }, 0.5);
+        }
+        if (list) {
+          entranceTl.to(list, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, 0.55);
+        }
+        if (pagination) {
+          entranceTl.to(pagination, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, 0.55);
+        }
+      });
+
+    } else {
+      preview.style.display = "none";
+      expanded.style.display = "block";
+    }
+  } else {
+    container.classList.add("collapsed");
+
+    if (window.gsap) {
+      container.style.transition = "none";
+      preview.style.transition = "none";
+      const ranks = ["first", "second", "third"];
+
+      // Kill any lingering tweens
+      gsap.killTweensOf(preview);
+      gsap.killTweensOf(expanded);
+      gsap.killTweensOf(container);
+      
+      const miniWrapper = preview.querySelector(".mini-podium-wrapper");
+      const expandBtn = preview.querySelector(".leaderboard-expand-btn");
+      const userBadge = preview.querySelector(".mini-user-badge");
+      const statusBtn = preview.querySelector(".leaderboard-preview-status");
+
+      if (miniWrapper) gsap.killTweensOf(miniWrapper);
+      if (expandBtn) gsap.killTweensOf(expandBtn);
+      if (userBadge) gsap.killTweensOf(userBadge);
+      if (statusBtn) gsap.killTweensOf(statusBtn);
+
+      ranks.forEach(rank => {
+        const bigCol = expanded.querySelector(`.podium-column.${rank}`);
+        if (bigCol) {
+          gsap.killTweensOf(bigCol);
+          const pedestal = bigCol.querySelector(".podium-pedestal");
+          if (pedestal) gsap.killTweensOf(pedestal);
+        }
+      });
+
+      // Get elements
+      const podiumCols = ranks.map(r => expanded.querySelector(`.podium-column.${r}`)).filter(Boolean);
+      const pedestals = podiumCols.map(col => col.querySelector(".podium-pedestal")).filter(Boolean);
+      
+      const header = expanded.querySelector(".leaderboard-header");
+      const tabs = expanded.querySelector(".leaderboard-tabs");
+      const search = expanded.querySelector(".leaderboard-search");
+      const list = expanded.querySelector(".leaderboard-list");
+      const pagination = expanded.querySelector(".leaderboard-pagination");
+      const bigW = expanded.querySelector(".podium-wrapper");
+
+      // Lock expanded to current height for smooth shrink
+      const currentHeight = expanded.offsetHeight;
+      container.style.height = `${currentHeight}px`;
+      container.style.overflow = "visible";
+      container.style.position = "relative";
+
+      // Show preview temporarily overlayed to measure it
+      preview.style.display = "flex";
+      preview.style.opacity = "1";
+      preview.style.position = "absolute";
+      preview.style.top = "0";
+      preview.style.left = "0";
+      preview.style.right = "0";
+      preview.style.zIndex = "10";
+      preview.style.pointerEvents = "none";
+      preview.style.background = "transparent";
+      preview.style.overflow = "visible";
+
+      const previewHeight = preview.offsetHeight;
+
+      // Calculate slideX for centered miniWrapper
+      let slideX = 0;
+      if (miniWrapper) {
+        const frameRect = preview.getBoundingClientRect();
+        const wrapperRect = miniWrapper.getBoundingClientRect();
+        const currentLeft = wrapperRect.left - frameRect.left;
+        const targetLeft = (frameRect.width - wrapperRect.width) / 2;
+        slideX = targetLeft - currentLeft;
+      }
+
+      // Measure rects to compute start state for miniWrapper
+      ranks.forEach(rank => {
+        const mCol = preview.querySelector(`.mini-podium-column.${rank}`);
+        const bCol = expanded.querySelector(`.podium-column.${rank}`);
+        if (mCol && bCol) {
+          const mTrophy = mCol.querySelector(".mini-avatar-trophy");
+          const bTrophy = bCol.querySelector(".avatar-badge");
+          const mPed = mCol.querySelector(".mini-pedestal");
+          const bPed = bCol.querySelector(".podium-pedestal");
+          const mName = mCol.querySelector(".mini-name");
+          const mScore = mCol.querySelector(".mini-score");
+          const bName = bCol.querySelector(".spy-name");
+          const bScore = bCol.querySelector(".spy-score");
+
+          // Temporarily put miniWrapper at centered position, scale 1 to measure rects
+          gsap.set(miniWrapper, { x: slideX, y: 0, scale: 1 });
+
+          // Trophy start transforms (uniform scale on .trophy-svg)
+          if (mTrophy && bTrophy) {
+            const mSvg = mTrophy.querySelector(".trophy-svg") || mTrophy;
+            const bSvg = bTrophy.querySelector(".trophy-svg") || bTrophy;
+            const rectMini = mSvg.getBoundingClientRect();
+            const rectBig = bSvg.getBoundingClientRect();
+            if (rectMini.width > 0 && rectBig.width > 0) {
+              const scale = rectBig.height / rectMini.height;
+              const deltaX = (rectBig.left + rectBig.width / 2) - (rectMini.left + rectMini.width / 2);
+              const deltaY = (rectBig.top + rectBig.height / 2) - (rectMini.top + rectMini.height / 2);
+              gsap.set(mTrophy, {
+                x: deltaX,
+                y: deltaY,
+                scale: scale,
+                transformOrigin: "center center"
+              });
+            }
+          }
+
+          // Pedestal start transforms
+          if (mPed && bPed) {
+            const rectMini = mPed.getBoundingClientRect();
+            const rectBig = bPed.getBoundingClientRect();
+            if (rectMini.width > 0 && rectBig.width > 0) {
+              const scaleX = rectBig.width / rectMini.width;
+              const scaleY = rectBig.height / rectMini.height;
+              const deltaX = (rectBig.left + rectBig.width / 2) - (rectMini.left + rectMini.width / 2);
+              const deltaY = (rectBig.top + rectBig.height / 2) - (rectMini.top + rectMini.height / 2);
+              gsap.set(mPed, {
+                x: deltaX,
+                y: deltaY,
+                scaleX: scaleX,
+                scaleY: scaleY,
+                transformOrigin: "center center"
+              });
+            }
+          }
+
+          // Name start transforms
+          if (mName && bName) {
+            const rectMini = mName.getBoundingClientRect();
+            const rectBig = bName.getBoundingClientRect();
+            if (rectMini.width > 0 && rectBig.width > 0) {
+              const scale = rectBig.height / rectMini.height;
+              const deltaX = (rectBig.left + rectBig.width / 2) - (rectMini.left + rectMini.width / 2);
+              const deltaY = (rectBig.top + rectBig.height / 2) - (rectMini.top + rectMini.height / 2);
+              gsap.set(mName, {
+                x: deltaX,
+                y: deltaY,
+                scale: scale,
+                transformOrigin: "center center"
+              });
+            }
+          }
+
+          // Score start transforms
+          if (mScore && bScore) {
+            const rectMini = mScore.getBoundingClientRect();
+            const rectBig = bScore.getBoundingClientRect();
+            if (rectMini.width > 0 && rectBig.width > 0) {
+              const scale = rectBig.height / rectMini.height;
+              const deltaX = (rectBig.left + rectBig.width / 2) - (rectMini.left + rectMini.width / 2);
+              const deltaY = (rectBig.top + rectBig.height / 2) - (rectMini.top + rectMini.height / 2);
+              gsap.set(mScore, {
+                x: deltaX,
+                y: deltaY,
+                scale: scale,
+                transformOrigin: "center center"
+              });
+            }
+          }
+        }
+      });
+
+      // Initialize miniWrapper itself to centered and fully visible (but its key contents are morphed)
+      if (miniWrapper) {
+        gsap.set(miniWrapper, {
+          x: slideX,
+          y: 0,
+          scale: 1,
+          opacity: 0
+        });
+      }
+      if (expandBtn) gsap.set(expandBtn, { opacity: 0 });
+      if (userBadge) gsap.set(userBadge, { opacity: 0 });
+      if (statusBtn) gsap.set(statusBtn, { opacity: 0, scale: 0.9 });
+
+      const tl = gsap.timeline({
+        onComplete: () => {
+          // Hide expanded, clean up
+          expanded.style.display = "none";
+          expanded.style.height = "";
+          expanded.style.overflow = "";
+          expanded.style.opacity = "";
+          expanded.style.paddingTop = "";
+          expanded.style.paddingBottom = "";
+          
+          preview.style.position = "";
+          preview.style.top = "";
+          preview.style.left = "";
+          preview.style.right = "";
+          preview.style.zIndex = "";
+          preview.style.pointerEvents = "";
+          preview.style.opacity = "";
+          preview.style.background = "";
+          preview.style.overflow = "";
+          preview.style.transition = "";
+
+          container.style.height = "";
+          container.style.overflow = "";
+          container.style.position = "";
+          container.style.transition = "";
+
+          podiumCols.forEach(col => gsap.set(col, { clearProps: "all" }));
+          pedestals.forEach(ped => gsap.set(ped, { clearProps: "all" }));
+          if (miniWrapper) gsap.set(miniWrapper, { clearProps: "all" });
+          if (expandBtn) gsap.set(expandBtn, { clearProps: "all" });
+          if (userBadge) gsap.set(userBadge, { clearProps: "all" });
+          if (statusBtn) gsap.set(statusBtn, { clearProps: "all" });
+
+          ranks.forEach(rank => {
+            const mCol = preview.querySelector(`.mini-podium-column.${rank}`);
+            if (mCol) {
+              const mTrophy = mCol.querySelector(".mini-avatar-trophy");
+              const mPed = mCol.querySelector(".mini-pedestal");
+              const mName = mCol.querySelector(".mini-name");
+              const mScore = mCol.querySelector(".mini-score");
+              if (mTrophy) {
+                gsap.set(mTrophy, { clearProps: "all" });
+                const mSvg = mTrophy.querySelector(".trophy-svg");
+                if (mSvg) gsap.set(mSvg, { clearProps: "all" });
+              }
+              if (mPed) gsap.set(mPed, { clearProps: "all" });
+              if (mName) gsap.set(mName, { clearProps: "all" });
+              if (mScore) gsap.set(mScore, { clearProps: "all" });
+            }
+          });
+
+          if (header) gsap.set(header, { clearProps: "all" });
+          if (tabs) gsap.set(tabs, { clearProps: "all" });
+          if (search) gsap.set(search, { clearProps: "all" });
+          if (list) gsap.set(list, { clearProps: "all" });
+          if (pagination) gsap.set(pagination, { clearProps: "all" });
+        }
+      });
+
+      // PHASE 1: Slide out / fade out all other elements
+      if (header) tl.to(header, { opacity: 0, y: -20, duration: 0.2, ease: "power2.in" }, 0);
+      if (tabs) tl.to(tabs, { opacity: 0, x: -30, duration: 0.2, ease: "power2.in" }, 0);
+      if (search) tl.to(search, { opacity: 0, x: 30, duration: 0.2, ease: "power2.in" }, 0);
+      if (list) tl.to(list, { opacity: 0, y: 30, duration: 0.25, ease: "power2.in" }, 0);
+      if (pagination) tl.to(pagination, { opacity: 0, y: 30, duration: 0.25, ease: "power2.in" }, 0);
+
+      // PHASE 2: Cross-fade big podium columns to miniWrapper
+      podiumCols.forEach(col => {
+        tl.to(col, {
+          opacity: 0,
+          duration: 0.2,
+          ease: "power2.in"
+        }, 0.15);
+      });
+      if (miniWrapper) {
+        tl.to(miniWrapper, {
+          opacity: 1,
+          duration: 0.2,
+          ease: "power2.in"
+        }, 0.15);
+      }
+
+      // PHASE 3: Shrink container height and shrink/move miniWrapper sub-elements back to centered position
+      tl.to(container, {
+        height: previewHeight,
+        duration: 0.6,
+        ease: "power2.inOut"
+      }, 0.25);
+      
+      ranks.forEach(rank => {
+        const mCol = preview.querySelector(`.mini-podium-column.${rank}`);
+        if (mCol) {
+          const mTrophy = mCol.querySelector(".mini-avatar-trophy");
+          const mPed = mCol.querySelector(".mini-pedestal");
+          const mName = mCol.querySelector(".mini-name");
+          const mScore = mCol.querySelector(".mini-score");
+
+          if (mTrophy) {
+            tl.to(mTrophy, {
+              x: 0,
+              y: 0,
+              scale: 1,
+              duration: 0.6,
+              ease: "power2.inOut"
+            }, 0.25);
+          }
+          if (mPed) {
+            tl.to(mPed, {
+              x: 0,
+              y: 0,
+              scaleX: 1,
+              scaleY: 1,
+              duration: 0.6,
+              ease: "power2.inOut"
+            }, 0.25);
+          }
+          if (mName) {
+            tl.to(mName, {
+              x: 0,
+              y: 0,
+              scale: 1,
+              opacity: 1,
+              duration: 0.6,
+              ease: "power2.inOut"
+            }, 0.25);
+          }
+          if (mScore) {
+            tl.to(mScore, {
+              x: 0,
+              y: 0,
+              scale: 1,
+              opacity: 1,
+              duration: 0.6,
+              ease: "power2.inOut"
+            }, 0.25);
+          }
+        }
+      });
+
+      // PHASE 4: Slide miniWrapper back to the left, and fade in button / badge / status HUD
+      if (miniWrapper) {
+        tl.to(miniWrapper, { x: 0, duration: 0.45, ease: "power2.inOut" }, 0.85);
+      }
+      if (expandBtn) {
+        tl.to(expandBtn, { opacity: 1, x: 0, duration: 0.3, ease: "power2.out" }, 1.1);
+      }
+      if (userBadge) {
+        tl.to(userBadge, { opacity: 1, x: 0, duration: 0.3, ease: "power2.out" }, 1.1);
+      }
+      if (statusBtn) {
+        tl.to(statusBtn, { opacity: 1, scale: 1, duration: 0.3, ease: "power2.out" }, 1.1);
+      }
+
+    } else {
+      expanded.style.display = "none";
+      preview.style.display = "flex";
+    }
+  }
+}
+
+function resetLeaderboardCollapseStates() {
+  const storyPreview = document.querySelector("#leaderboardPreviewStory");
+  const storyExpanded = document.querySelector("#leaderboardExpandedStory");
+  const storyContainer = document.querySelector("#leaderboardSectionStory");
+  if (storyPreview && storyExpanded && storyContainer) {
+    storyContainer.classList.add("collapsed");
+    storyPreview.style.display = "flex";
+    storyPreview.style.height = "auto";
+    storyPreview.style.opacity = "1";
+    storyPreview.style.paddingTop = "16px";
+    storyPreview.style.paddingBottom = "16px";
+    storyExpanded.style.display = "none";
+    storyExpanded.style.height = "0";
+    storyExpanded.style.opacity = "0";
+    storyExpanded.style.paddingTop = "0";
+    storyExpanded.style.paddingBottom = "0";
+  }
+
+  const playPreview = document.querySelector("#leaderboardPreviewPlay");
+  const playExpanded = document.querySelector("#leaderboardExpandedPlay");
+  const playContainer = document.querySelector("#leaderboardSectionPlay");
+  if (playPreview && playExpanded && playContainer) {
+    playContainer.classList.add("collapsed");
+    playPreview.style.display = "flex";
+    playPreview.style.height = "auto";
+    playPreview.style.opacity = "1";
+    playPreview.style.paddingTop = "16px";
+    playPreview.style.paddingBottom = "16px";
+    playExpanded.style.display = "none";
+    playExpanded.style.height = "0";
+    playExpanded.style.opacity = "0";
+    playExpanded.style.paddingTop = "0";
+    playExpanded.style.paddingBottom = "0";
+  }
+
+  const resultPreview = document.querySelector("#leaderboardPreviewResult");
+  const resultExpanded = document.querySelector("#leaderboardExpandedResult");
+  const resultContainer = document.querySelector("#leaderboardSectionResult");
+  if (resultPreview && resultExpanded && resultContainer) {
+    resultContainer.classList.remove("collapsed");
+    resultPreview.style.display = "none";
+    resultPreview.style.height = "0";
+    resultPreview.style.opacity = "0";
+    resultPreview.style.paddingTop = "0";
+    resultPreview.style.paddingBottom = "0";
+    resultExpanded.style.display = "block";
+    resultExpanded.style.height = "auto";
+    resultExpanded.style.opacity = "1";
+    resultExpanded.style.paddingTop = "30px";
+    resultExpanded.style.paddingBottom = "30px";
+  }
+}
+
+function setupLeaderboardToggles() {
+  ["Story", "Play", "Result"].forEach(view => {
+    const previewBar = document.querySelector(`#leaderboardPreview${view}`);
+    const collapseBtn = document.querySelector(`#leaderboardCollapseBtn${view}`);
+    
+    if (previewBar) {
+      previewBar.addEventListener("click", () => {
+        toggleLeaderboard(view, "expanded");
+      });
+    }
+
+    if (collapseBtn) {
+      collapseBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleLeaderboard(view, "collapsed");
+      });
+    }
+  });
+}
+
+function setupLeaderboardControls() {
+  const views = ["Story", "Play", "Result"];
+
+  views.forEach(key => {
+    // 1. Period filter tabs event listeners
+    const section = document.querySelector(`#leaderboardSection${key}`);
+    if (section) {
+      const tabs = section.querySelectorAll(".tab-btn");
+      tabs.forEach(btn => {
+        btn.addEventListener("click", () => {
+          tabs.forEach(t => t.classList.remove("active"));
+          btn.classList.add("active");
+
+          const period = btn.getAttribute("data-period") || "all";
+          leaderboardFilters[key].period = period;
+          leaderboardFilters[key].page = 1; // Reset to page 1 on filter change
+          
+          renderLeaderboard();
+        });
+      });
+    }
+
+    // 2. Search input event listener
+    const searchInp = document.querySelector(`#leaderboardSearch${key}`);
+    if (searchInp) {
+      searchInp.addEventListener("input", () => {
+        leaderboardFilters[key].search = searchInp.value;
+        leaderboardFilters[key].page = 1; // Reset to page 1 on search change
+        renderLeaderboard();
+      });
+    }
+
+    // 3. Pagination buttons event listeners
+    const prevBtn = document.querySelector(`#leaderboardPrevBtn${key}`);
+    const nextBtn = document.querySelector(`#leaderboardNextBtn${key}`);
+
+    if (prevBtn) {
+      prevBtn.addEventListener("click", () => {
+        if (leaderboardFilters[key].page > 1) {
+          leaderboardFilters[key].page--;
+          renderLeaderboard();
+        }
+      });
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener("click", () => {
+        leaderboardFilters[key].page++;
+        renderLeaderboard();
+      });
+    }
+  });
+}
+
+setupLeaderboardToggles();
+setupLeaderboardControls();
+syncSpyNameUI();
+resetLeaderboardCollapseStates();
 runIntroAnimations();
-switchTest("kluis"); // Load default
+
+const savedVariant = localStorage.getItem("tm_selected_variant") || "kluis";
+switchTest(savedVariant);
