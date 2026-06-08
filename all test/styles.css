@@ -5747,50 +5747,76 @@ body.theme-leaderboard #leaderboardSectionResult {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  max-width: 320px;
+  max-width: 380px;
   margin: 0 auto;
-  padding: 8px 16px;
-  border-radius: 8px;
-  background: rgba(136, 164, 236, 0.05);
-  border: 1px dashed rgba(102, 53, 93, 0.2);
+  padding: 10px 20px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(102, 53, 93, 0.03) 0%, rgba(59, 7, 51, 0.05) 100%);
+  border: 1.5px solid rgba(102, 53, 93, 0.15);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.6), 0 4px 12px rgba(59, 7, 51, 0.03);
   text-align: center;
   box-sizing: border-box;
+  transition: all 0.3s ease;
 }
 
 .status-hud-title {
   font-family: "Orbitron", sans-serif;
-  font-size: 0.72rem;
+  font-size: 0.76rem;
   font-weight: 700;
   color: var(--purple-soft);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: 2px;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
-.status-hud-desc {
-  font-size: 0.78rem;
-  color: var(--muted);
-  margin: 0;
-  font-weight: 500;
-  line-height: 1.3;
+.status-hud-telemetry {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: "Orbitron", sans-serif;
+  font-size: 0.74rem;
+  color: var(--purple-soft);
+  margin-top: 2px;
+  flex-wrap: wrap;
 }
 
-.status-hud-desc strong {
+.status-hud-telemetry.justify-center {
+  justify-content: center;
+}
+
+.telemetry-item {
+  white-space: nowrap;
+}
+
+.telemetry-item strong {
   color: var(--purple);
   font-weight: 700;
 }
 
+.telemetry-item.promo-text {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 0.7rem;
+  letter-spacing: 0.5px;
+}
+
+.telemetry-divider {
+  color: rgba(102, 53, 93, 0.25);
+  font-weight: 400;
+}
+
 /* Radar pulse animation for online indicator */
 .radar-pulse-dot {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   background-color: var(--green);
   border-radius: 50%;
   display: inline-block;
-  box-shadow: 0 0 6px var(--green);
+  box-shadow: 0 0 8px var(--green);
   animation: radarPulse 1.5s infinite;
 }
 

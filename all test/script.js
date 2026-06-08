@@ -3926,9 +3926,13 @@ function renderPreviewBadges(scoresList, highlightIdx, containerSelector) {
           <span class="radar-pulse-dot"></span>
           Verbinding Actief
         </div>
-        <p class="status-hud-desc">
-          Agent <strong>${escapeHTML(savedName)}</strong> staat op plek <strong>#${overallRank}</strong> met <strong>${bestEntry.apm} APM</strong>!
-        </p>
+        <div class="status-hud-telemetry">
+          <span class="telemetry-item">Agent: <strong>${escapeHTML(savedName)}</strong></span>
+          <span class="telemetry-divider">//</span>
+          <span class="telemetry-item">Rang: <strong>#${overallRank}</strong></span>
+          <span class="telemetry-divider">//</span>
+          <span class="telemetry-item">Record: <strong>${bestEntry.apm} APM</strong></span>
+        </div>
       `;
     } else {
       statusEl.innerHTML = `
@@ -3936,9 +3940,9 @@ function renderPreviewBadges(scoresList, highlightIdx, containerSelector) {
           <span class="radar-pulse-dot" style="background-color: var(--orange); box-shadow: 0 0 6px var(--orange); animation-name: radarPulseOrange;"></span>
           Huidige Missie
         </div>
-        <p class="status-hud-desc">
-          Type de test en claim je positie op de ranglijst!
-        </p>
+        <div class="status-hud-telemetry justify-center">
+          <span class="telemetry-item promo-text">Start de typetest om deel te nemen!</span>
+        </div>
       `;
     }
   }
