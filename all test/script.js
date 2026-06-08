@@ -3693,6 +3693,7 @@ function renderLeaderboard(highlightIndex = -1, placeholderEntry = null) {
         pageScores.forEach((entry, idx) => {
           const row = document.createElement("div");
           row.className = "leaderboard-row";
+          row.style.opacity = "0";
 
           // Find original index in timeframeFiltered to show its true rank
           const originalIdxInTimeframe = timeframeFiltered.findIndex(e => e === entry);
@@ -3724,6 +3725,40 @@ function renderLeaderboard(highlightIndex = -1, placeholderEntry = null) {
       if (prevBtn) prevBtn.disabled = currentPage === 1;
       if (nextBtn) nextBtn.disabled = currentPage === totalPages;
       if (pageInfo) pageInfo.textContent = `Pagina ${currentPage} van ${totalPages}`;
+
+      // Stagger entrance animations for list rows and podium columns (clean and minimal)
+      if (window.gsap) {
+        const rows = bodyEl.querySelectorAll(".leaderboard-row");
+        if (rows.length > 0) {
+          gsap.fromTo(rows, 
+            { opacity: 0, y: 5 },
+            { opacity: 1, y: 0, duration: 0.25, stagger: 0.02, ease: "power1.out" }
+          );
+        }
+        if (podiumEl) {
+          const cols = podiumEl.querySelectorAll(".podium-column");
+          if (cols.length > 0) {
+            // Fade the parent wrapper slightly so the transition is smooth without layout gaps
+            gsap.fromTo(podiumEl, 
+              { opacity: 0.45 },
+              { opacity: 1, duration: 0.22, ease: "power1.out" }
+            );
+            // Micro-slide the columns up without hiding them completely (since they render at full opacity)
+            gsap.fromTo(cols, 
+              { y: 8 },
+              { y: 0, duration: 0.25, stagger: 0.02, ease: "power2.out" }
+            );
+          }
+        }
+      } else {
+        // Fallback if GSAP is not present
+        const rows = bodyEl.querySelectorAll(".leaderboard-row");
+        rows.forEach(r => r.style.opacity = "1");
+        if (podiumEl) {
+          const cols = podiumEl.querySelectorAll(".podium-column");
+          cols.forEach(c => c.style.opacity = "1");
+        }
+      }
     }
   });
 }
