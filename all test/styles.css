@@ -4432,7 +4432,9 @@ body.theme-dossier .lead-kluis {
 }
 
 #normalConsoleWrapper .normal-prompt-text {
-  min-height: 160px;
+  height: 250px;
+  max-height: 250px;
+  overflow-y: hidden;
   padding: 24px;
   background: #fdfdfd;
   color: #b0aab3;
@@ -5698,6 +5700,14 @@ body.theme-leaderboard #leaderboardSectionResult {
    ========================================== */
 .vault-stats.leaderboard-stats-row {
   grid-template-columns: repeat(5, 1fr);
+}
+
+body.theme-normal .vault-stats.leaderboard-stats-row {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+body.theme-normal .vault-stats.leaderboard-stats-row .vault-stat:last-child {
+  display: none !important;
 }
 
 .position-value-wrapper {

@@ -10,8 +10,8 @@ const TOTAL_SECONDS_MAP = {
 
 const INITIAL_WORDS = 14;
 const WORD_BATCH = 9;
-const BUFFER_CHARS = 50;
-const INITIAL_VISIBLE_CHARS = 100;
+const BUFFER_CHARS = 150;
+const INITIAL_VISIBLE_CHARS = 350;
 
 // ═══════════════════════════════════════════════════════════════════
 // DIFFICULTY WORD POOLS
@@ -514,7 +514,7 @@ function pickSentence(apm) {
 let firstSentenceLength = 0;
 
 function buildInitialText() {
-  if (currentTest === "leaderboard") {
+  if (currentTest === "leaderboard" || currentTest === "normal") {
     firstSentenceLength = LEADERBOARD_STATIC_TEXT.length;
     return LEADERBOARD_STATIC_TEXT;
   }
@@ -529,7 +529,7 @@ function buildInitialText() {
 function regeneratePreviewText() {
   usedSentences.clear();
   let newText;
-  if (currentTest === "leaderboard") {
+  if (currentTest === "leaderboard" || currentTest === "normal") {
     newText = LEADERBOARD_STATIC_TEXT;
     firstSentenceLength = newText.length;
   } else {
@@ -621,7 +621,7 @@ function checkCalibration() {
 // ═══════════════════════════════════════════════════════════════════
 
 function appendAdaptiveSentences(count) {
-  if (currentTest === "leaderboard") {
+  if (currentTest === "leaderboard" || currentTest === "normal") {
     const words = LEADERBOARD_STATIC_TEXT.split(/\s+/);
     targetWords.push(...words);
     targetText = targetWords.join(" ");
@@ -766,10 +766,20 @@ function renderPrompt() {
     const containerTop = promptTextEl.scrollTop;
     const containerHeight = promptTextEl.clientHeight;
 
-    if (elTop > containerTop + containerHeight - 75) {
-      promptTextEl.scrollTop = elTop - 50;
-    } else if (elTop < containerTop) {
-      promptTextEl.scrollTop = elTop - 20;
+    if (currentTest === "normal" || currentTest === "leaderboard") {
+      // One line is about 45px. Trigger scroll when the cursor is within 3 lines (~135px) of the bottom.
+      if (elTop > containerTop + containerHeight - 135) {
+        promptTextEl.scrollTop = elTop - 45; // Scroll cursor line near the top (leaving ~4 lines visible below)
+      } else if (elTop < containerTop) {
+        promptTextEl.scrollTop = elTop - 20;
+      }
+    } else {
+      // Default scrolling behavior for kluis and dossier
+      if (elTop > containerTop + containerHeight - 75) {
+        promptTextEl.scrollTop = elTop - 50;
+      } else if (elTop < containerTop) {
+        promptTextEl.scrollTop = elTop - 20;
+      }
     }
   }
 }
