@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="nl-BE">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TypeMission — Iframe Test & Implementatie Tool</title>
+  <style>
+    :root {
+      --purple: #3b0733;
+      --orange: #e48e35;
+      --orange-soft: #f5b05f;
+      --green: #9ad744;
+      --dark-bg: #11030f;
+      --card-bg: rgba(59, 7, 51, 0.4);
+      --border-color: rgba(255, 255, 255, 0.1);
+      --text-white: #ffffff;
+      --text-muted: #bdaebc;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(135deg, var(--dark-bg) 0%, #1c051a 100%);
+      color: var(--text-white);
+      line-height: 1.6;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, #ffffff, var(--orange-soft));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 1px;
+    }
+
+    .subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+    }
+
+    /* Variant Switcher */
+    .variant-switcher-wrapper {
+      margin-bottom: 30px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 20px 25px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 15px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .variant-label {
+      font-size: 1rem;
+      color: var(--orange-soft);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .variant-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .variant-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      padding: 8px 16px;
+      border-radius: 10px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .variant-btn:hover {
+      border-color: var(--orange-soft);
+      color: #fff;
+    }
+
+    .variant-btn.active {
+      background: var(--orange);
+      border-color: var(--orange);
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(228, 142, 53, 0.3);
+    }
+
+    /* Explanation Cards */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+
+    @media (min-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 25px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .card h2 {
+      font-size: 1.3rem;
+      margin-bottom: 15px;
+      color: var(--orange-soft);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 15px;
+    }
+
+    .steps-list {
+      list-style-position: inside;
+      margin-bottom: 15px;
+    }
+
+    .steps-list li {
+      margin-bottom: 8px;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .steps-list strong {
+      color: var(--text-white);
+    }
+
+    /* Code Box styling */
+    .code-box-wrapper {
+      position: relative;
+    }
+
+    .code-box {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 15px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.9rem;
+      color: var(--green);
+      overflow-x: auto;
+      white-space: pre;
+      margin-top: 10px;
+      position: relative;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: var(--orange);
+      border: none;
+      color: white;
+      padding: 5px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+
+    .copy-btn:hover {
+      background: var(--orange-soft);
+    }
+
+    /* Controls for Iframe Preview */
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .preview-title {
+      font-size: 1.4rem;
+      color: var(--text-white);
+    }
+
+    .device-switcher {
+      display: flex;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 4px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .device-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .device-btn.active {
+      background: var(--purple);
+      color: var(--text-white);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Responsive Simulator wrapper */
+    .simulator-wrapper {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    .iframe-container {
+      width: 100%;
+      max-width: 100%;
+      border-radius: 10px;
+      background: #000;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+      border: 4px solid #333;
+      transition: width 0.4s ease;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .iframe-container::before {
+      content: '';
+      display: block;
+      height: 25px;
+      background: #222;
+      border-bottom: 1px solid #333;
+      width: 100%;
+      position: relative;
+    }
+
+    .iframe-container::after {
+      content: '● ● ●';
+      font-size: 8px;
+      color: #555;
+      position: absolute;
+      top: 6px;
+      left: 15px;
+      z-index: 10;
+    }
+
+    iframe {
+      width: 100%;
+      height: 700px;
+      border: none;
+      background: transparent;
+      display: block;
+      transition: height 0.3s ease;
+    }
+
+    .alert {
+      background: rgba(228, 142, 53, 0.15);
+      border-left: 4px solid var(--orange);
+      padding: 15px;
+      border-radius: 0 8px 8px 0;
+      margin-top: 15px;
+      color: var(--text-white);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>TypeMission</h1>
+      <p class="subtitle">Iframe Test- & Implementatie Omgeving</p>
+    </header>
+
+    <!-- Variant Selector Switcher -->
+    <div class="variant-switcher-wrapper">
+      <span class="variant-label">Selecteer Typetest Variant:</span>
+      <div class="variant-buttons">
+        <button class="variant-btn active" onclick="switchVariant('kluis', this)">Kraak de Kluis</button>
+        <button class="variant-btn" onclick="switchVariant('normal', this)">Standaard Typetest</button>
+        <button class="variant-btn" onclick="switchVariant('leaderboard', this)">Standaard met Leaderboard</button>
+        <button class="variant-btn" onclick="switchVariant('dossier', this)">Ontcijfer het Dossier</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- Links: Uitleg & Stappen -->
+      <div class="card">
+        <h2>
+          <span>⚙️</span> WordPress Implementatie Gids
+        </h2>
+        <p>Volg deze stappen om de <strong id="gids-test-name">Kraak de Kluis</strong> op je WordPress website te zetten:</p>
+        <ol class="steps-list">
+          <li><strong>Upload de map:</strong> Upload de volledige map <code id="gids-folder-name">kluis-iframe</code> via FTP of File Manager naar de server van je website (bijv. in <code id="gids-folder-path">/public_html/typetests/kluis-iframe/</code>).</li>
+          <li><strong>WordPress Blok toevoegen:</strong> Bewerk je pagina of bericht in WordPress en voeg een <strong>Custom HTML (Aangepaste HTML)</strong> blok toe.</li>
+          <li><strong>Code plakken:</strong> Kopieer en plak de code hiernaast in dat blok.</li>
+          <li><strong>URL aanpassen:</strong> Vervang in de code de link <code>src</code> door de echte URL van je website (bijvoorbeeld <code>https://jouwwebsite.nl/typetests/kluis-iframe/</code>).</li>
+        </ol>
+        <div class="alert">
+          <strong>Tip:</strong> Omdat we de website headers, menu's en banners hebben weggelaten, laadt de typetest nu supersnel en past deze perfect binnen de lay-out van je WordPress-pagina!
+        </div>
+      </div>
+
+      <!-- Rechts: Code & Copy-paste -->
+      <div class="card">
+        <h2>
+          <span>📄</span> WordPress HTML Code
+        </h2>
+        <p>Kopieer deze code naar je WordPress Custom HTML blok. Pas de <code>src</code> link aan naar jouw online pad:</p>
+        <div class="code-box-wrapper">
+          <button class="copy-btn" onclick="copyCode()">Kopieer Code</button>
+          <div class="code-box" id="htmlCode">&lt;iframe 
+  id="typetest-iframe" 
+  src="./iframe version/kluis-iframe/index.html" 
+  width="100%" 
+  height="700px" 
+  style="border: none; overflow: hidden; display: block;" 
+  allowfullscreen&gt;
+&lt;/iframe&gt;
+
+&lt;script&gt;
+  window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'resize-iframe') {
+      const iframe = document.getElementById('typetest-iframe');
+      if (iframe) {
+        iframe.style.height = event.data.height + 'px';
+      }
+    }
+  });
+&lt;/script&gt;</div>
+        </div>
+        <p style="margin-top: 15px; font-size: 0.85rem;"><em>Opmerking: De hoogte wordt nu volautomatisch en dynamisch aangepast aan de hand van de inhoud (bijvoorbeeld als de resultaten worden getoond). Geen dubbele scrollbalken meer!</em></p>
+      </div>
+    </div>
+
+    <!-- Iframe Simulator -->
+    <div class="preview-header">
+      <h2 class="preview-title">🖥️ Live Iframe Preview & Simulator</h2>
+      <div class="device-switcher">
+        <button class="device-btn active" onclick="switchDevice('desktop', this)">Desktop (100%)</button>
+        <button class="device-btn" onclick="switchDevice('tablet', this)">Tablet (768px)</button>
+        <button class="device-btn" onclick="switchDevice('mobile', this)">Mobiel (420px)</button>
+      </div>
+    </div>
+
+    <div class="simulator-wrapper">
+      <div class="iframe-container" id="iframeContainer" style="width: 100%;">
+        <iframe src="iframe version/kluis-iframe/index.html" id="testIframe"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentVariant = 'kluis';
+
+    const variantConfig = {
+      kluis: {
+        name: 'Kraak de Kluis',
+        folder: 'kluis-iframe',
+        path: 'kluis-iframe/index.html'
+      },
+      normal: {
+        name: 'Standaard Typetest',
+        folder: 'normal-iframe',
+        path: 'normal-iframe/index.html'
+      },
+      leaderboard: {
+        name: 'Standaard met Leaderboard',
+        folder: 'leaderboard-iframe',
+        path: 'leaderboard-iframe/index.html'
+      },
+      dossier: {
+        name: 'Ontcijfer het Dossier',
+        folder: 'dossier-iframe',
+        path: 'dossier-iframe/index.html'
+      }
+    };
+
+    function switchVariant(variant, element) {
+      // Remove active class from buttons
+      const buttons = document.querySelectorAll('.variant-btn');
+      buttons.forEach(btn => btn.classList.remove('active'));
+      
+      // Add active class to clicked button
+      element.classList.add('active');
+      currentVariant = variant;
+
+      // Update iframe source
+      const iframe = document.getElementById('testIframe');
+      iframe.src = `iframe version/${variantConfig[variant].path}`;
+      iframe.style.height = '700px'; // Reset to default height during load
+
+      // Update guide texts
+      document.getElementById('gids-test-name').textContent = variantConfig[variant].name;
+      document.getElementById('gids-folder-name').textContent = variantConfig[variant].folder;
+      document.getElementById('gids-folder-path').textContent = `/public_html/typetests/${variantConfig[variant].folder}/`;
+
+      // Update code box HTML display
+      const folder = variantConfig[variant].folder;
+      const htmlCodeEl = document.getElementById('htmlCode');
+      htmlCodeEl.innerHTML = `&lt;iframe 
+  id="typetest-iframe" 
+  src="./iframe version/${folder}/index.html" 
+  width="100%" 
+  height="700px" 
+  style="border: none; overflow: hidden; display: block;" 
+  allowfullscreen&gt;
+&lt;/iframe&gt;
+
+&lt;script&gt;
+  window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'resize-iframe') {
+      const iframe = document.getElementById('typetest-iframe');
+      if (iframe) {
+        iframe.style.height = event.data.height + 'px';
+      }
+    }
+  });
+&lt;/script&gt;`;
+    }
+
+    function switchDevice(device, element) {
+      // Remove active class from buttons
+      const buttons = document.querySelectorAll('.device-btn');
+      buttons.forEach(btn => btn.classList.remove('active'));
+      
+      // Add active class to clicked button
+      element.classList.add('active');
+
+      const container = document.getElementById('iframeContainer');
+      if (device === 'desktop') {
+        container.style.width = '100%';
+      } else if (device === 'tablet') {
+        container.style.width = '768px';
+      } else if (device === 'mobile') {
+        container.style.width = '420px';
+      }
+    }
+
+    function copyCode() {
+      const folder = variantConfig[currentVariant].folder;
+      const codeText = `<iframe \n  id="typetest-iframe" \n  src="https://jouwwebsite.nl/typetests/${folder}/" \n  width="100%" \n  height="700px" \n  style="border: none; overflow: hidden; display: block;" \n  allowfullscreen>\n</iframe>\n\n<script>\n  window.addEventListener('message', function(event) {\n    if (event.data && event.data.type === 'resize-iframe') {\n      const iframe = document.getElementById('typetest-iframe');\n      if (iframe) {\n        iframe.style.height = event.data.height + 'px';\n      }\n    }\n  });\n<\/script>`;
+      navigator.clipboard.writeText(codeText).then(() => {
+        const copyBtn = document.querySelector('.copy-btn');
+        copyBtn.textContent = 'Gekopieerd!';
+        copyBtn.style.background = '#9ad744';
+        setTimeout(() => {
+          copyBtn.textContent = 'Kopieer Code';
+          copyBtn.style.background = '#e48e35';
+        }, 2000);
+      });
+    }
+
+    // Auto-resize the simulator preview iframe when the child posts its height
+    window.addEventListener('message', function(event) {
+      if (event.data && event.data.type === 'resize-iframe') {
+        const iframe = document.getElementById('testIframe');
+        if (iframe) {
+          iframe.style.height = event.data.height + 'px';
+        }
+      }
+    });
+  </script>
+</body>
+
+</html>

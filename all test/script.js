@@ -3936,22 +3936,7 @@ function renderPreviewBadges(scoresList, highlightIdx, containerSelector) {
   podiumWrapper.innerHTML = podiumHtml;
   container.appendChild(podiumWrapper);
 
-  // If the user stands at rank >= 4 (index >= 3), append their user standing badge
-  if (highlightIdx >= 3 && highlightIdx < scoresList.length) {
-    const userEntry = scoresList[highlightIdx];
-    const userBadge = document.createElement("div");
-    userBadge.className = "mini-user-badge";
-
-    const name = userEntry.name || "Jij";
-    const apm = userEntry.apm !== undefined ? userEntry.apm : 0;
-    const rank = highlightIdx + 1;
-
-    userBadge.innerHTML = `
-      <span class="mini-user-rank">#${rank}</span>
-      <span>${escapeHTML(name)} (${apm})</span>
-    `;
-    container.appendChild(userBadge);
-  }
+  // The user standing badge (orange number name score) has been removed from the collapsed leaderboard as requested.
 
   // Update middle status HUD
   const statusEl = document.querySelector(containerSelector.replace("MiniPodium", "Status"));
@@ -4519,6 +4504,8 @@ function toggleLeaderboard(view, targetState) {
           preview.style.background = "";
           preview.style.overflow = "";
           preview.style.transition = "";
+          preview.style.paddingTop = "";
+          preview.style.paddingBottom = "";
 
           container.style.height = "";
           container.style.overflow = "";
@@ -4668,8 +4655,8 @@ function resetLeaderboardCollapseStates() {
     storyPreview.style.display = "flex";
     storyPreview.style.height = "auto";
     storyPreview.style.opacity = "1";
-    storyPreview.style.paddingTop = "16px";
-    storyPreview.style.paddingBottom = "16px";
+    storyPreview.style.paddingTop = "";
+    storyPreview.style.paddingBottom = "";
     storyExpanded.style.display = "none";
     storyExpanded.style.height = "0";
     storyExpanded.style.opacity = "0";
@@ -4685,8 +4672,8 @@ function resetLeaderboardCollapseStates() {
     playPreview.style.display = "flex";
     playPreview.style.height = "auto";
     playPreview.style.opacity = "1";
-    playPreview.style.paddingTop = "16px";
-    playPreview.style.paddingBottom = "16px";
+    playPreview.style.paddingTop = "";
+    playPreview.style.paddingBottom = "";
     playExpanded.style.display = "none";
     playExpanded.style.height = "0";
     playExpanded.style.opacity = "0";

@@ -1,0 +1,943 @@
+﻿<!doctype html>
+<html lang="nl-BE">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TypeMission Typetest â€” Speel de Typetest</title>
+  <link rel="stylesheet" href="styles.css?v=30">
+</head>
+
+<body class="iframe-mode">
+<main>
+    <section class="section test-section" id="typetest" aria-labelledby="test-title">
+      <div class="section-inner">
+        <div class="test-heading reveal">
+          <div>
+            <p class="eyebrow dark">De toelatingstest van Miss J</p>
+            <h2 id="test-title-normal" class="test-title title-normal" style="display:none;">Typetest van 1 minuut</h2>
+            <h2 id="test-title-leaderboard" class="test-title title-leaderboard" style="display:none;">Typetest met Leaderboard</h2>
+            <h2 id="test-title-kluis" class="test-title title-kluis">Kraak de kluis in 1 minuut</h2>
+            <h2 id="test-title-dossier" class="test-title title-dossier" style="display:none;">Ontcijfer het dossier in 1 minuut</h2>
+          </div>
+        </div>
+
+        <div class="mission-stage reveal" id="missionStage">
+          <span class="stage-glow" aria-hidden="true"></span>
+          <div class="morph-flash" id="morphFlash" aria-hidden="true"></div>
+
+          <!-- â”€â”€ BRIEFING (Shared) â”€â”€ -->
+          <div class="mission-view active" id="storyStage">
+            <section class="mission-briefing-card" aria-labelledby="storyTitle">
+              <div class="briefing-visual" aria-label="Miss J briefing animatie">
+                <div class="briefing-avatar-hud">
+                  <div class="hud-ring-outer"></div>
+                  <div class="hud-ring-inner"></div>
+                  <video id="briefingVideo" src="assets/start.mov" poster="assets/can_u_make_her_wave_202605151230.jpeg" playsinline></video>
+                  <div class="video-hover-overlay" aria-hidden="true">
+                    <div class="video-hover-icon">
+                      <svg class="play-icon" width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                      <svg class="pause-icon" width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    </div>
+                  </div>
+                  <div class="video-glitch-overlay" aria-hidden="true">
+                    <div class="glitch-hud-content">
+                      <div class="glitch-spinner"></div>
+                      <span class="glitch-text">CONNECTING...</span>
+                    </div>
+                  </div>
+                </div>
+                <span class="story-scanline" aria-hidden="true"></span>
+                <span class="story-live-badge calling" id="startLiveBadge">Miss J calling</span>
+              </div>
+              <div class="briefing-content">
+                <button class="sound-toggle briefing-sound-toggle" type="button" aria-pressed="true" aria-label="Geluid aan">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                </button>
+                <p class="eyebrow dark">Super Spy School</p>
+                <h3 id="storyTitle">Bekijk of skip de briefing</h3>
+                <div class="story-transmission" id="storyText" aria-live="polite">
+                  Miss J staat klaar in de controlekamer. Start de briefing of ga meteen door naar de typetest.
+                </div>
+                <div class="story-progress" aria-hidden="true">
+                  <span class="active"></span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                <div class="story-actions">
+                  <button class="primary-button" id="playBriefingButton" type="button">
+                    <span aria-hidden="true">&#9658;</span>
+                    Start briefing
+                  </button>
+                  <button class="secondary-story-button" id="beginMissionButton" type="button">
+                    Sla briefing over
+                  </button>
+                </div>
+                <p class="unlock-note" id="unlockNote">Je kunt de briefing bekijken of meteen beginnen.</p>
+              </div>
+            </section>
+            
+            <!-- Leaderboard Section (Story) -->
+            <div class="leaderboard-container collapsed" id="leaderboardSectionStory">
+              <!-- Collapsed Preview Frame -->
+              <div class="leaderboard-preview-frame" id="leaderboardPreviewStory">
+                <div class="mini-podium-container" id="leaderboardMiniPodiumStory"></div>
+                <div class="leaderboard-preview-status" id="leaderboardStatusStory"></div>
+                <button type="button" class="leaderboard-expand-btn" id="leaderboardExpandBtnStory">
+                  <span class="btn-text">Bekijk Volledige Ranglijst</span> <span class="btn-icon">â–¾</span>
+                </button>
+              </div>
+
+              <!-- Expanded Content -->
+              <div class="leaderboard-expanded-content" id="leaderboardExpandedStory" style="display: none; height: 0; opacity: 0; overflow: hidden;">
+                <div class="leaderboard-header">
+                  <div class="header-text-group">
+                    <h3 class="leaderboard-title">Ranglijst Superspionnen</h3>
+                    <p class="leaderboard-subtitle">Kan jij de topsnelheid van Miss J verbeteren?</p>
+                  </div>
+                  <div id="leaderboardSavedMessageStory" class="saved-name-badge" style="display: none;">
+                    <span class="status-indicator"></span>
+                    <span class="badge-text">Agent: <strong id="savedSpyNameDisplayStory"></strong></span>
+                    <button type="button" class="change-name-btn" id="changeSpyNameBtnStory">Naam wijzigen</button>
+                  </div>
+                  <button type="button" class="leaderboard-collapse-btn" id="leaderboardCollapseBtnStory">
+                    <span class="btn-text">Sluiten</span> <span class="btn-icon">â–´</span>
+                  </button>
+                </div>
+                
+                <!-- Feedback alert wrapper -->
+                <div id="leaderboardFeedbackStory" class="leaderboard-feedback error" style="display: none;"></div>
+                
+                <div class="leaderboard-controls">
+                  <div class="leaderboard-tabs">
+                    <button type="button" class="tab-btn active" data-period="all" id="tabStoryAll">All Time</button>
+                    <button type="button" class="tab-btn" data-period="daily" id="tabStoryDaily">Daily</button>
+                    <button type="button" class="tab-btn" data-period="weekly" id="tabStoryWeekly">Weekly</button>
+                    <button type="button" class="tab-btn" data-period="monthly" id="tabStoryMonthly">Monthly</button>
+                  </div>
+                  <div class="leaderboard-search">
+                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" class="search-input" id="leaderboardSearchStory" placeholder="Zoek spion..." autocomplete="off">
+                  </div>
+                </div>
+
+                <div class="podium-wrapper" id="leaderboardPodiumStory"></div>
+
+                <div class="leaderboard-list">
+                  <div class="leaderboard-header-row">
+                    <div class="col-rank">Positie</div>
+                    <div class="col-name">Spion</div>
+                    <div class="col-wpm text-right">APM</div>
+                    <div class="col-accuracy text-right">Precisie</div>
+                  </div>
+                  <div class="leaderboard-rows-container" id="leaderboardBodyStory"></div>
+                </div>
+                <div class="leaderboard-pagination" id="leaderboardPaginationStory">
+                  <button type="button" class="page-btn prev-btn" id="leaderboardPrevBtnStory">Vorige</button>
+                  <span class="page-info" id="leaderboardPageInfoStory">Pagina 1 van 1</span>
+                  <button type="button" class="page-btn next-btn" id="leaderboardNextBtnStory">Volgende</button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Shared games footer during briefing -->
+            <div class="vault-games-footer">
+              <h3 class="vault-games-title">Oefen verder met andere opdrachten</h3>
+              <div class="vault-games-grid">
+                <a class="mini-game-card-new" href="https://www.typemission.be/codeblaster/">
+                  <img src="assets/codeblaster.webp" alt="Codeblaster">
+                  <div class="game-card-details">
+                    <div class="game-card-header">
+                      <strong>Codeblaster</strong>
+                      <span class="game-tag">typespelletje</span>
+                    </div>
+                    <span>Probeer ook de andere typespelletjes.</span>
+                  </div>
+                  <div class="game-play-arrow" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </div>
+                </a>
+                <a class="mini-game-card-new" href="https://www.typemission.be/typetris/">
+                  <img src="assets/typetris.webp" alt="Typetris">
+                  <div class="game-card-details">
+                    <div class="game-card-header">
+                      <strong>Typetris</strong>
+                      <span class="game-tag">typespelletje</span>
+                    </div>
+                    <span>Stapelen, typen en blijven oefenen.</span>
+                  </div>
+                  <div class="game-play-arrow" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- â”€â”€ UNIFIED GAME PLAY CONTAINER â”€â”€ -->
+          <div class="mission-view" id="missionLayout" hidden>
+
+            <!-- 1. NORMAL TEST CONSOLE -->
+            <div id="normalConsoleWrapper" class="console-theme-wrapper">
+              <section class="typing-console" aria-label="Typetest">
+                <div class="mission-topbar">
+                  <div>
+                    <span class="console-kicker">Missie 01</span>
+                    <strong>Data onderscheppen</strong>
+                  </div>
+                  <div class="topbar-controls">
+                    <button class="sound-toggle normal-sound-toggle" type="button" aria-pressed="true" aria-label="Geluid aan">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="vault-stats leaderboard-stats-row" aria-label="Live resultaten">
+                  <div class="vault-stat">
+                    <span class="stat-value timer">60</span>
+                    <span class="stat-label">seconden</span>
+                  </div>
+                  <div class="vault-stat">
+                    <span class="stat-value liveWpm">0</span>
+                    <span class="stat-label">APM</span>
+                  </div>
+                  <div class="vault-stat">
+                    <span class="stat-value mistakeCount">0</span>
+                    <span class="stat-label">fouten</span>
+                  </div>
+                  <div class="vault-stat">
+                    <span class="stat-value accuracy">100%</span>
+                    <span class="stat-label">precisie</span>
+                  </div>
+                  <div class="vault-stat">
+                    <div class="position-value-wrapper">
+                      <span class="stat-value current-position">â€”</span>
+                      <span class="position-arrow neutral"></span>
+                    </div>
+                    <span class="stat-label">positie</span>
+                  </div>
+                </div>
+
+                <div class="upload-module" aria-label="Data upload voortgang">
+                  <div class="upload-meta">
+                    <span>Data Upload</span>
+                    <span class="uploadPercent">0%</span>
+                  </div>
+                  <div class="upload-track">
+                    <div class="upload-fill normal-upload-fill"></div>
+                    <span class="upload-check upload-check-1" style="left: 20%">1</span>
+                    <span class="upload-check upload-check-2" style="left: 40%">2</span>
+                    <span class="upload-check upload-check-3" style="left: 60%">3</span>
+                    <span class="upload-check upload-check-4" style="left: 80%">4</span>
+                    <span class="upload-check upload-check-5" style="left: 100%">5</span>
+                  </div>
+                </div>
+
+                <div class="typing-card normal-typing-card">
+                  <div class="prompt-header">
+                    <span>Geheime code</span>
+                    <span class="missionStatus">Wacht op start</span>
+                  </div>
+                  <div class="prompt-container">
+                    <div class="prompt-text normal-prompt-text" aria-live="polite"></div>
+                    <div class="typing-overlay normal-typing-overlay">
+                      <div class="overlay-content">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="overlay-icon"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                        <p class="overlayMessage">Wacht op briefing...</p>
+                      </div>
+                    </div>
+                    <textarea id="normalTypingInput" class="typingInput" spellcheck="false" autocomplete="off" autocapitalize="off" disabled></textarea>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <!-- 2. KLAAK DE KLUIS CONSOLE -->
+            <div id="kluisConsoleWrapper" class="console-theme-wrapper">
+              <section class="vault-console" aria-label="Kluiskraker typetest">
+                <div class="mission-topbar">
+                  <div>
+                    <span class="console-kicker">Missie 01</span>
+                    <strong>Kraak de kluis</strong>
+                  </div>
+                  <div class="topbar-controls">
+                    <div class="custom-dropdown difficultyDropdown">
+                      <div class="dropdown-header difficultyDropdownHeader">
+                        <span class="currentDiffDisplay">Niveau: Dynamisch</span>
+                        <svg class="dropdown-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                      </div>
+                      <ul class="dropdown-list">
+                        <li data-val="dynamic" class="selected">Niveau: Dynamisch</li>
+                        <li data-val="easy">Niveau: Basis</li>
+                        <li data-val="medium">Niveau: Medium</li>
+                        <li data-val="hard">Niveau: Hard</li>
+                        <li data-val="expert">Niveau: Expert</li>
+                      </ul>
+                    </div>
+                    <button class="sound-toggle vault-sound-toggle" type="button" aria-pressed="true" aria-label="Geluid aan">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="vault-body">
+                  <div class="vault-stats" aria-label="Live resultaten">
+                    <div class="vault-stat"><span class="stat-value timer">60</span><span class="stat-label">seconden</span></div>
+                    <div class="vault-stat"><span class="stat-value liveWpm">0</span><span class="stat-label">APM</span></div>
+                    <div class="vault-stat"><span class="stat-value mistakeCount">0</span><span class="stat-label">fouten</span></div>
+                    <div class="vault-stat"><span class="stat-value accuracy">100%</span><span class="stat-label">precisie</span></div>
+                  </div>
+                  
+                  <div class="vault-wrapper">
+                    <div class="vault-interior" id="vaultInterior">
+                      <div class="interior-glow"></div>
+                      <div class="interior-shelves">
+                        <div class="interior-label">GEHEIME BESTANDEN</div>
+                        <div class="interior-files">
+                          <span class="file-icon">ðŸ“</span>
+                          <span class="file-icon">ðŸ“‚</span>
+                          <span class="file-icon">ðŸ”</span>
+                        </div>
+                        <div class="interior-message" id="interiorMessage">Kluis gekraakt! De bestanden zijn veiliggesteld.</div>
+                      </div>
+                    </div>
+
+                    <div class="vault-door" id="vaultDoor">
+                      <div class="vault-frame">
+                        <div class="vault-hinges">
+                          <span class="hinge"></span>
+                          <span class="hinge"></span>
+                          <span class="hinge"></span>
+                        </div>
+                        <div class="vault-face">
+                          <div class="vault-top-row">
+                            <div class="vault-dial-wrapper">
+                              <div class="vault-dial" id="vaultDial">
+                                <div class="dial-ring"></div>
+                                <div class="dial-notch"></div>
+                                <div class="dial-notch" style="transform:rotate(90deg)"></div>
+                                <div class="dial-notch" style="transform:rotate(180deg)"></div>
+                                <div class="dial-notch" style="transform:rotate(270deg)"></div>
+                              </div>
+                              <div class="dial-center">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
+                              </div>
+                              <div class="dial-marker" aria-hidden="true"></div>
+                            </div>
+                            <div class="vault-status-display">
+                              <div class="vault-status-screen" id="vaultStatusScreen">
+                                <span class="vault-status-label missionStatus">Wacht op start</span>
+                              </div>
+                              <div class="vault-bolts">
+                                <span class="bolt" id="bolt1"></span>
+                                <span class="bolt" id="bolt2"></span>
+                                <span class="bolt" id="bolt3"></span>
+                                <span class="bolt" id="bolt4"></span>
+                                <span class="bolt" id="bolt5"></span>
+                              </div>
+                            </div>
+                            <div class="vault-handle" id="vaultHandle">
+                              <div class="handle-track">
+                                <div class="handle-slider">
+                                  <div class="handle-grip"></div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="vault-screen kluis-typing-card" id="vaultCodePanel">
+                            <div class="screen-header">
+                              <span class="screen-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg> Geheime code</span>
+                              <span class="screen-status codeStatus">vergrendeld</span>
+                            </div>
+                            <div class="screen-body">
+                              <div class="code-text kluis-prompt-text" aria-live="polite"></div>
+                              <div class="code-overlay kluis-typing-overlay">
+                                <div class="overlay-content">
+                                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="overlay-icon">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                  </svg>
+                                  <p class="overlayMessage">Wacht op briefing...</p>
+                                </div>
+                              </div>
+                              <textarea id="kluisTypingInput" class="typingInput" spellcheck="false" autocomplete="off" autocapitalize="off" disabled></textarea>
+                            </div>
+                          </div>
+
+                          <div class="vault-progress">
+                            <div class="crack-track">
+                              <div class="crack-fill kluis-upload-fill"></div>
+                              <span class="crack-checkpoint upload-check-1" style="left:20%">1</span>
+                              <span class="crack-checkpoint upload-check-2" style="left:40%">2</span>
+                              <span class="crack-checkpoint upload-check-3" style="left:60%">3</span>
+                              <span class="crack-checkpoint upload-check-4" style="left:80%">4</span>
+                              <span class="crack-checkpoint upload-check-5" style="left:100%">5</span>
+                            </div>
+                            <span class="crack-percent uploadPercent">0%</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <!-- 3. ONTCIJFER HET DOSSIER CONSOLE -->
+            <div id="dossierConsoleWrapper" class="console-theme-wrapper">
+              <section class="dossier-console" aria-label="Dossier ontcijfer typetest">
+                <div class="mission-topbar">
+                  <div>
+                    <span class="console-kicker">Missie 01</span>
+                    <strong>Ontcijfer het dossier</strong>
+                  </div>
+                  <div class="topbar-controls">
+                    <div class="custom-dropdown difficultyDropdown">
+                      <div class="dropdown-header difficultyDropdownHeader">
+                        <span class="currentDiffDisplay">Niveau: Dynamisch</span>
+                        <svg class="dropdown-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                      </div>
+                      <ul class="dropdown-list">
+                        <li data-val="dynamic" class="selected">Niveau: Dynamisch</li>
+                        <li data-val="easy">Niveau: Basis</li>
+                        <li data-val="medium">Niveau: Medium</li>
+                        <li data-val="hard">Niveau: Hard</li>
+                        <li data-val="expert">Niveau: Expert</li>
+                      </ul>
+                    </div>
+                    <button class="sound-toggle dossier-sound-toggle" type="button" aria-pressed="true" aria-label="Geluid aan">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="dossier-body">
+                  <div class="dossier-stats" aria-label="Live resultaten">
+                    <div class="dossier-stat"><span class="stat-value timer">60</span><span class="stat-label">seconden</span></div>
+                    <div class="dossier-stat"><span class="stat-value liveWpm">0</span><span class="stat-label">APM</span></div>
+                    <div class="dossier-stat"><span class="stat-value mistakeCount">0</span><span class="stat-label">fouten</span></div>
+                    <div class="dossier-stat"><span class="stat-value accuracy">100%</span><span class="stat-label">precisie</span></div>
+                  </div>
+
+                  <div class="classified-doc manila-folder" id="classifiedDoc">
+                    <div class="folder-tab">FILE NO: DOSSIER-X67</div>
+                    
+                    <div class="folder-paper">
+                      <div class="paper-header">
+                        <div class="paper-meta">STATUS: <span class="missionStatus">CLASSIFIED INFORMATION</span></div>
+                        <div class="paper-stamp" id="docStamp"><span class="codeStatus">TOP SECRET</span></div>
+                      </div>
+
+                      <div class="paper-photo-area">
+                        <div class="paper-clip">
+                          <svg width="32" height="60" viewBox="0 0 24 24" fill="none" stroke="#707070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                          </svg>
+                        </div>
+                        <div class="poster-container" style="background-image: url('cat.jpg');">
+                          <div class="poster-reveal-overlay">KLIK OM TE ONTHULLEN</div>
+                          <div class="redact-strip locked" id="section1"><span>REDACTED</span></div>
+                          <div class="redact-strip locked" id="section2"><span>REDACTED</span></div>
+                          <div class="redact-strip locked" id="section3"><span>REDACTED</span></div>
+                          <div class="redact-strip locked" id="section4"><span>REDACTED</span></div>
+                          <div class="redact-strip locked" id="section5"><span>REDACTED</span></div>
+                        </div>
+                      </div>
+
+                      <div class="paper-typing-area dossier-typing-card" id="dossierCodePanel">
+                        <div class="screen-body typewriter-body">
+                          <div class="code-text dossier-prompt-text" aria-live="polite"></div>
+                          <div class="code-overlay dossier-typing-overlay">
+                            <div class="overlay-content">
+                              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="overlay-icon">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                              </svg>
+                              <p class="overlayMessage">Wacht op briefing...</p>
+                            </div>
+                          </div>
+                          <textarea id="dossierTypingInput" class="typingInput" spellcheck="false" autocomplete="off" autocapitalize="off" disabled></textarea>
+                        </div>
+                      </div>
+
+                      <div class="paper-footer">
+                        <div class="doc-progress-ring small-ring">
+                          <svg viewBox="0 0 36 36" class="progress-svg">
+                            <circle class="ring-bg" cx="18" cy="18" r="15.9" />
+                            <circle class="ring-fill" id="decryptFill" cx="18" cy="18" r="15.9" stroke-dasharray="0 100" stroke-dashoffset="0" />
+                          </svg>
+                          <span class="ring-label uploadPercent">0%</span>
+                        </div>
+                        <div class="crack-track paper-track">
+                          <div class="crack-fill dossier-upload-fill"></div>
+                          <span class="crack-checkpoint upload-check-1" style="left:20%">1</span>
+                          <span class="crack-checkpoint upload-check-2" style="left:40%">2</span>
+                          <span class="crack-checkpoint upload-check-3" style="left:60%">3</span>
+                          <span class="crack-checkpoint upload-check-4" style="left:80%">4</span>
+                          <span class="crack-checkpoint upload-check-5" style="left:100%">5</span>
+                        </div>
+                        <span class="paper-signature">Authorized: <span class="signature-font">Miss J</span></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <!-- UNIFIED ACTION BUTTONS PANEL -->
+            <div class="actions">
+              <button class="primary-button" id="startButton" type="button">
+                <span aria-hidden="true">&#9658;</span> Start de test
+              </button>
+              <button class="primary-button finish-button" id="finishButton" type="button" hidden>
+                <span aria-hidden="true">&#10003;</span> Bekijk uitslag
+              </button>
+              <button class="ghost-button" id="resetButton" type="button">
+                <span aria-hidden="true">&#8635;</span> Opnieuw
+              </button>
+            </div>
+            
+            <!-- Leaderboard Section (Play) -->
+            <div class="leaderboard-container collapsed" id="leaderboardSectionPlay">
+              <!-- Collapsed Preview Frame -->
+              <div class="leaderboard-preview-frame" id="leaderboardPreviewPlay">
+                <div class="mini-podium-container" id="leaderboardMiniPodiumPlay"></div>
+                <div class="leaderboard-preview-status" id="leaderboardStatusPlay"></div>
+                <button type="button" class="leaderboard-expand-btn" id="leaderboardExpandBtnPlay">
+                  <span class="btn-text">Bekijk Volledige Ranglijst</span> <span class="btn-icon">â–¾</span>
+                </button>
+              </div>
+
+              <!-- Expanded Content -->
+              <div class="leaderboard-expanded-content" id="leaderboardExpandedPlay" style="display: none; height: 0; opacity: 0; overflow: hidden;">
+                <div class="leaderboard-header">
+                  <div class="header-text-group">
+                    <h3 class="leaderboard-title">Ranglijst Superspionnen</h3>
+                    <p class="leaderboard-subtitle">Kan jij de topsnelheid van Miss J verbeteren?</p>
+                  </div>
+                  <div id="leaderboardSavedMessagePlay" class="saved-name-badge" style="display: none;">
+                    <span class="status-indicator"></span>
+                    <span class="badge-text">Agent: <strong id="savedSpyNameDisplayPlay"></strong></span>
+                    <button type="button" class="change-name-btn" id="changeSpyNameBtnPlay">Naam wijzigen</button>
+                  </div>
+                  <button type="button" class="leaderboard-collapse-btn" id="leaderboardCollapseBtnPlay">
+                    <span class="btn-text">Sluiten</span> <span class="btn-icon">â–´</span>
+                  </button>
+                </div>
+                
+                <!-- Feedback alert wrapper -->
+                <div id="leaderboardFeedbackPlay" class="leaderboard-feedback error" style="display: none;"></div>
+                
+                <div class="leaderboard-controls">
+                  <div class="leaderboard-tabs">
+                    <button type="button" class="tab-btn active" data-period="all" id="tabPlayAll">All Time</button>
+                    <button type="button" class="tab-btn" data-period="daily" id="tabPlayDaily">Daily</button>
+                    <button type="button" class="tab-btn" data-period="weekly" id="tabPlayWeekly">Weekly</button>
+                    <button type="button" class="tab-btn" data-period="monthly" id="tabPlayMonthly">Monthly</button>
+                  </div>
+                  <div class="leaderboard-search">
+                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" class="search-input" id="leaderboardSearchPlay" placeholder="Zoek spion..." autocomplete="off">
+                  </div>
+                </div>
+
+                <div class="podium-wrapper" id="leaderboardPodiumPlay"></div>
+
+                <div class="leaderboard-list">
+                  <div class="leaderboard-header-row">
+                    <div class="col-rank">Positie</div>
+                    <div class="col-name">Spion</div>
+                    <div class="col-wpm text-right">APM</div>
+                    <div class="col-accuracy text-right">Precisie</div>
+                  </div>
+                  <div class="leaderboard-rows-container" id="leaderboardBodyPlay"></div>
+                </div>
+                <div class="leaderboard-pagination" id="leaderboardPaginationPlay">
+                  <button type="button" class="page-btn prev-btn" id="leaderboardPrevBtnPlay">Vorige</button>
+                  <span class="page-info" id="leaderboardPageInfoPlay">Pagina 1 van 1</span>
+                  <button type="button" class="page-btn next-btn" id="leaderboardNextBtnPlay">Volgende</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Unified games footer during play -->
+            <div class="vault-games-footer">
+              <h3 class="vault-games-title">Oefen verder met andere opdrachten</h3>
+              <div class="vault-games-grid">
+                <a class="mini-game-card-new" href="https://www.typemission.be/codeblaster/">
+                  <img src="assets/codeblaster.webp" alt="Codeblaster">
+                  <div class="game-card-details">
+                    <div class="game-card-header">
+                      <strong>Codeblaster</strong>
+                      <span class="game-tag">typespelletje</span>
+                    </div>
+                    <span>Probeer ook de andere typespelletjes.</span>
+                  </div>
+                  <div class="game-play-arrow" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </div>
+                </a>
+                <a class="mini-game-card-new" href="https://www.typemission.be/typetris/">
+                  <img src="assets/typetris.webp" alt="Typetris">
+                  <div class="game-card-details">
+                    <div class="game-card-header">
+                      <strong>Typetris</strong>
+                      <span class="game-tag">typespelletje</span>
+                    </div>
+                    <span>Stapelen, typen en blijven oefenen.</span>
+                  </div>
+                  <div class="game-play-arrow" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </div>
+                </a>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- â”€â”€ END BRIEFING (Shared) â”€â”€ -->
+          <section class="mission-view mission-briefing-card" id="endBriefingStage" aria-labelledby="endBriefingTitle" hidden>
+            <div class="briefing-visual" aria-label="Miss J eindbriefing animatie">
+              <div class="briefing-avatar-hud">
+                <div class="hud-ring-outer"></div>
+                <div class="hud-ring-inner"></div>
+                <video id="endBriefingVideo" src="assets/end.mov" playsinline></video>
+                <div class="video-hover-overlay" aria-hidden="true">
+                  <div class="video-hover-icon">
+                    <svg class="play-icon" width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                    <svg class="pause-icon" width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                  </div>
+                </div>
+                <div class="video-glitch-overlay" aria-hidden="true">
+                  <div class="glitch-hud-content">
+                    <div class="glitch-spinner"></div>
+                    <span class="glitch-text">CONNECTING...</span>
+                  </div>
+                </div>
+              </div>
+              <span class="story-scanline" aria-hidden="true"></span>
+              <span class="story-live-badge">Miss J live</span>
+            </div>
+            <div class="briefing-content">
+              <button class="sound-toggle briefing-sound-toggle" type="button" aria-pressed="true" aria-label="Geluid aan">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+              </button>
+              <p class="eyebrow dark">Super Spy School</p>
+              <h3 id="endBriefingTitle">Gefeliciteerd, rekruut!</h3>
+              <div class="story-transmission" id="endBriefingText" aria-live="polite">
+                Geweldig, je hebt het gehaald!
+              </div>
+              <div class="story-progress" id="endBriefingProgress" aria-hidden="true">
+                <span class="active"></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+              <div class="story-actions">
+                <button class="primary-button" id="skipEndBriefingButton" type="button">
+                  Sla video over
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- â”€â”€ RESULT (Shared Premium Panel) â”€â”€ -->
+          <div class="mission-view" id="resultPanel" aria-live="polite" hidden>
+            <section class="result-panel-new">
+              
+              <!-- 1. Results Title Block -->
+              <div class="result-title-block">
+                <p class="eyebrow dark">Uitslag van de test</p>
+                <h2 id="resultTitle">Kluis gekraakt!</h2>
+              </div>
+
+              <!-- 2. Header Row (Miss J Transmission & Agent Badge) -->
+              <div class="result-header-row">
+                <div class="result-header-left">
+                  <div class="debriefing-card">
+                    <div class="debriefing-header">
+                      <span class="debriefing-sender">HQ TRANSMISSION // COMMANDER Miss J</span>
+                      <div class="equalizer-bars" aria-hidden="true">
+                        <span class="eq-bar"></span>
+                        <span class="eq-bar"></span>
+                        <span class="eq-bar"></span>
+                        <span class="eq-bar"></span>
+                        <span class="eq-bar"></span>
+                      </div>
+                      <span class="comms-status-badge" aria-hidden="true">COMMS SECURE</span>
+                    </div>
+                    <div class="debriefing-body">
+                      <div class="debriefing-avatar-wrapper">
+                        <img src="assets/Make_her_two_thumbs_up_202605151233.jpeg" alt="Miss J" class="debriefing-avatar">
+                        <span class="live-pulse-dot" aria-hidden="true"></span>
+                      </div>
+                      <div class="debriefing-text-content">
+                        <p id="resultText"></p>
+                        <div class="debriefing-footer-meta" aria-hidden="true">DECRYPTION LEVEL 100% // NO CORRUPTION</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="result-header-right">
+                  <div class="agent-profile-badge">
+                    <div class="badge-gloss-overlay" aria-hidden="true"></div>
+                    <div class="badge-security-header">
+                      <span>SECURITY CLEARANCE</span>
+                      <span class="clearance-level">LEVEL 2</span>
+                    </div>
+                    <div class="badge-main-content">
+                      <div class="agent-id-photo-area" aria-label="Geheime agent identificatie">
+                        <div class="photo-grid-lines" aria-hidden="true"></div>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="agent-card-icon">
+                          <path d="M17 10h1a1 1 0 0 1 1 1v1a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-1a1 1 0 0 1 1-1h1M7 10V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v4" fill="currentColor" opacity="0.15" />
+                          <path d="M3 14h18" />
+                          <path d="M7 17a2 2 0 1 0 4 0h2a2 2 0 1 0 4 0" />
+                          <path d="M11 17h2" />
+                        </svg>
+                        <div class="scan-reticle" aria-hidden="true"></div>
+                        <span class="photo-scan-status" aria-hidden="true">ACTIVE</span>
+                      </div>
+                      <div class="agent-meta-info">
+                        <div class="meta-row-top">
+                          <span class="agent-label">AGENT ID: TM-9824</span>
+                          <div class="badge-chip" aria-hidden="true" title="Secure Encryption Chip">
+                            <span class="chip-inner-pattern"></span>
+                          </div>
+                        </div>
+                        <strong class="agent-rank-name" id="rankBadge">Rekruut</strong>
+                        <div class="agent-reward-box">
+                          <img src="coin.svg" alt="" aria-hidden="true" class="reward-coin-icon">
+                          <span id="completeCoins">0</span> coins
+                        </div>
+                      </div>
+                    </div>
+                    <div class="badge-barcode-section">
+                      <div class="badge-barcode" aria-hidden="true">
+                        <div class="badge-barcode-lines"></div>
+                      </div>
+                      <div class="badge-serial" aria-hidden="true">SYS.CODE: 8824-AANS-KL</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3. Premium Stats Row -->
+              <div class="complete-stats">
+                <div>
+                  <strong id="completeWpm">0</strong>
+                  <span>aanslagen per minuut</span>
+                </div>
+                <div>
+                  <strong id="completeAccuracy">100%</strong>
+                  <span>precisie</span>
+                </div>
+                <div>
+                  <strong id="completeMistakes">0</strong>
+                  <span>fouten</span>
+                </div>
+              </div>
+
+              <!-- 4. Animated Line Graphs -->
+              <div class="result-charts-row" aria-label="Resultaat grafieken">
+                <div class="chart-box" id="apmChartBox">
+                  <h4 class="chart-title">Snelheid (aanslagen per minuut)</h4>
+                  <div class="chart-wrapper">
+                    <div class="chart-container" id="apmChartContainer"></div>
+                  </div>
+                </div>
+                <div class="chart-box" id="accuracyChartBox">
+                  <h4 class="chart-title">Netheid (precisie)</h4>
+                  <div class="chart-wrapper">
+                    <div class="chart-container" id="accuracyChartContainer"></div>
+                  </div>
+                </div>
+              </div>
+
+              <p class="spy-fact-new" id="spyFact">
+                Bij TypeMission oefen je stap voor stap tot je snel en foutloos blind kunt typen met tien vingers.
+              </p>
+
+              <!-- Leaderboard Section (Result) -->
+              <div class="leaderboard-container" id="leaderboardSectionResult">
+                <!-- Collapsed Preview Frame -->
+                <div class="leaderboard-preview-frame" id="leaderboardPreviewResult" style="display: none; height: 0; opacity: 0; overflow: hidden;">
+                  <div class="mini-podium-container" id="leaderboardMiniPodiumResult"></div>
+                  <div class="leaderboard-preview-status" id="leaderboardStatusResult"></div>
+                  <button type="button" class="leaderboard-expand-btn" id="leaderboardExpandBtnResult">
+                    <span class="btn-text">Bekijk Volledige Ranglijst</span> <span class="btn-icon">â–¾</span>
+                  </button>
+                </div>
+
+                <!-- Expanded Content -->
+                <div class="leaderboard-expanded-content" id="leaderboardExpandedResult">
+                  <div class="leaderboard-header">
+                    <div class="header-text-group">
+                      <h3 class="leaderboard-title">Ranglijst Superspionnen</h3>
+                      <p class="leaderboard-subtitle">Kan jij de topsnelheid van Miss J verbeteren?</p>
+                    </div>
+                    <div id="leaderboardSavedMessageResult" class="saved-name-badge" style="display: none;">
+                      <span class="status-indicator"></span>
+                      <span class="badge-text">Agent: <strong id="savedSpyNameDisplayResult"></strong></span>
+                      <button type="button" class="change-name-btn" id="changeSpyNameBtnResult">Naam wijzigen</button>
+                    </div>
+                    <button type="button" class="leaderboard-collapse-btn" id="leaderboardCollapseBtnResult">
+                      <span class="btn-text">Sluiten</span> <span class="btn-icon">â–´</span>
+                    </button>
+                  </div>
+                  
+                  <!-- Feedback alert wrapper -->
+                  <div id="leaderboardFeedbackResult" class="leaderboard-feedback error" style="display: none;"></div>
+                  
+                  <!-- Submission Form -->
+                  <div id="leaderboardFormResult" class="leaderboard-form">
+                    <span class="form-label">Voeg je naam toe aan het leaderboard:</span>
+                    <div class="form-row">
+                      <input type="text" id="leaderboardNameInputResult" maxlength="15" placeholder="Typ je spionnennaam..." autocomplete="off">
+                      <button class="primary-button" id="leaderboardSubmitBtnResult" type="button">Score opslaan</button>
+                    </div>
+                  </div>
+
+                  <div class="leaderboard-controls">
+                    <div class="leaderboard-tabs">
+                      <button type="button" class="tab-btn active" data-period="all" id="tabResultAll">All Time</button>
+                      <button type="button" class="tab-btn" data-period="daily" id="tabResultDaily">Daily</button>
+                      <button type="button" class="tab-btn" data-period="weekly" id="tabResultWeekly">Weekly</button>
+                      <button type="button" class="tab-btn" data-period="monthly" id="tabResultMonthly">Monthly</button>
+                    </div>
+                    <div class="leaderboard-search">
+                      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      </svg>
+                      <input type="text" class="search-input" id="leaderboardSearchResult" placeholder="Zoek spion..." autocomplete="off">
+                    </div>
+                  </div>
+                  
+                  <div class="podium-wrapper" id="leaderboardPodiumResult"></div>
+                  
+                  <!-- Leaderboard List -->
+                  <div class="leaderboard-list">
+                    <div class="leaderboard-header-row">
+                      <div class="col-rank">Positie</div>
+                      <div class="col-name">Spion</div>
+                      <div class="col-wpm text-right">APM</div>
+                      <div class="col-accuracy text-right">Precisie</div>
+                    </div>
+                    <div class="leaderboard-rows-container" id="leaderboardBodyResult">
+                      <!-- Dynamically populated -->
+                    </div>
+                  </div>
+                  <div class="leaderboard-pagination" id="leaderboardPaginationResult">
+                    <button type="button" class="page-btn prev-btn" id="leaderboardPrevBtnResult">Vorige</button>
+                    <span class="page-info" id="leaderboardPageInfoResult">Pagina 1 van 1</span>
+                    <button type="button" class="page-btn next-btn" id="leaderboardNextBtnResult">Volgende</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 5. Top Secret Spy Dossier / Coupon -->
+              <div class="potential-card">
+                <div class="classified-stamp">TOEGELATEN</div>
+                <div class="potential-info">
+                  <span class="potential-badge">TOP SECRET</span>
+                  <h3 class="potential-header">Rekruut toont uitzonderlijke potentie</h3>
+                  <p class="potential-text">
+                    Ons hoofdkwartier heeft je resultaten geanalyseerd: je toont buitengewoon veel aanleg voor het spionnenwerk! We willen je heel graag verder opleiden op de <strong>SuperSpySchool</strong> tot volwaardig geheim agent.
+                  </p>
+                </div>
+                <div class="coupon-container">
+                  <span class="coupon-label">Kortingscode (15%):</span>
+                  <strong class="coupon-code locked" id="couponCode" title="Klik om de code te ontcijferen">ONTCIJFER CODE</strong>
+                </div>
+              </div>
+
+              <!-- 6. Actions Block -->
+              <div class="result-actions-row">
+                <div class="action-card trial">
+                  <a class="cta-button-flat trial" id="trialButton" href="https://www.typemission.be/proefles/">
+                    Speel gratis proefles
+                  </a>
+                  <span class="action-desc">Ontdek direct hoe de typecursus werkt. Geen account nodig, start direct!</span>
+                </div>
+                <div class="action-card buy">
+                  <a class="cta-button-flat buy" id="buyButton" href="https://www.typemission.be/typecursus-bestellen/">
+                    Koop de cursus
+                  </a>
+                  <span class="action-desc">Krijg direct toegang tot alle 20 weken van het spionnenverhaal en leer blindtypen met 10 vingers.</span>
+                </div>
+                <div class="action-card retry">
+                  <button class="cta-button-flat retry" id="retryResultButton" type="button">
+                    <span aria-hidden="true">&#8635;</span> Nog een poging
+                  </button>
+                  <span class="action-desc" id="retryActionDesc">Kraak de kluis opnieuw en verbeter je APM record!</span>
+                </div>
+              </div>
+              
+              <p class="cta-feedback-new" id="ctaFeedback"></p>
+            </section>
+
+            <!-- Games footer under results -->
+            <div class="vault-games-footer">
+              <h3 class="vault-games-title">Oefen verder met andere opdrachten</h3>
+              <div class="vault-games-grid">
+                <a class="mini-game-card-new" href="https://www.typemission.be/codeblaster/">
+                  <img src="assets/codeblaster.webp" alt="Codeblaster">
+                  <div class="game-card-details">
+                    <div class="game-card-header">
+                      <strong>Codeblaster</strong>
+                      <span class="game-tag">typespelletje</span>
+                    </div>
+                    <span>Probeer ook de andere typespelletjes.</span>
+                  </div>
+                  <div class="game-play-arrow" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </div>
+                </a>
+                <a class="mini-game-card-new" href="https://www.typemission.be/typetris/">
+                  <img src="assets/typetris.webp" alt="Typetris">
+                  <div class="game-card-details">
+                    <div class="game-card-header">
+                      <strong>Typetris</strong>
+                      <span class="game-tag">typespelletje</span>
+                    </div>
+                    <span>Stapelen, typen en blijven oefenen.</span>
+                  </div>
+                  <div class="game-play-arrow" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+</main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script src="script.js?v=28"></script>
+</body>
+
+</html>
