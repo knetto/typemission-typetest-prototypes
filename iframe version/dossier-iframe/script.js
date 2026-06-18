@@ -325,6 +325,26 @@ const storyText = document.querySelector("#storyText");
 const endBriefingText = document.querySelector("#endBriefingText");
 const storyProgress = document.querySelectorAll(".story-progress span");
 
+const isChromeBrowser = /\bChrome\//.test(navigator.userAgent) && !/\b(OPR|Opera|Edg)\//.test(navigator.userAgent);
+document.documentElement.classList.toggle("chrome-video-safe", isChromeBrowser);
+
+function useChromeVideoSource(video) {
+  if (!isChromeBrowser || !video || !video.dataset.chromeSrc) return;
+
+  const fallbackSrc = video.getAttribute("src");
+  video.addEventListener("error", () => {
+    if (!fallbackSrc || video.getAttribute("src") === fallbackSrc) return;
+    video.setAttribute("src", fallbackSrc);
+    video.load();
+  }, { once: true });
+
+  video.setAttribute("src", video.dataset.chromeSrc);
+  video.load();
+}
+
+useChromeVideoSource(briefingVideo);
+useChromeVideoSource(endBriefingVideo);
+
 const playBriefingButton = document.querySelector("#playBriefingButton");
 const beginMissionButton = document.querySelector("#beginMissionButton");
 const skipEndBriefingButton = document.querySelector("#skipEndBriefingButton");
@@ -4769,11 +4789,20 @@ const savedVariant = "dossier";
 switchTest(savedVariant);
 
 // Automatically send document height to parent window (useful for iframe resizing in WordPress)
+let pendingHeightFrame = 0;
+let lastSentIframeHeight = 0;
+
 function sendHeightToParent() {
-  const height = document.documentElement.scrollHeight || document.body.scrollHeight;
-  if (window.parent && window.parent !== window) {
+  if (!window.parent || window.parent === window || pendingHeightFrame) return;
+
+  pendingHeightFrame = window.requestAnimationFrame(() => {
+    pendingHeightFrame = 0;
+    const height = Math.ceil(document.documentElement.scrollHeight || document.body.scrollHeight);
+    if (height === lastSentIframeHeight) return;
+
+    lastSentIframeHeight = height;
     window.parent.postMessage({ type: 'resize-iframe', height: height }, '*');
-  }
+  });
 }
 window.addEventListener('load', sendHeightToParent);
 window.addEventListener('resize', sendHeightToParent);

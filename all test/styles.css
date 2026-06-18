@@ -648,6 +648,16 @@ h3 {
     0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
+.chrome-video-safe .briefing-avatar-hud video {
+  filter: none !important;
+  transform: translateZ(0);
+  will-change: auto;
+}
+
+.chrome-video-safe .briefing-avatar-hud.glitch-active video {
+  animation: none !important;
+}
+
 /* Concentric outer tech ring */
 .hud-ring-outer {
   position: absolute;
