@@ -10,8 +10,8 @@ const TOTAL_SECONDS_MAP = {
 
 const INITIAL_WORDS = 14;
 const WORD_BATCH = 9;
-const BUFFER_CHARS = 150;
-const INITIAL_VISIBLE_CHARS = 350;
+const BUFFER_CHARS = 50;
+const INITIAL_VISIBLE_CHARS = 100;
 
 // ═══════════════════════════════════════════════════════════════════
 // DIFFICULTY WORD POOLS
@@ -520,10 +520,8 @@ function buildInitialText() {
   }
   const s1 = pickSentence(0);
   const s2 = pickSentence(0);
-  const s3 = pickSentence(0);
-  const s4 = pickSentence(0);
   firstSentenceLength = s1.length;
-  return [s1, s2, s3, s4].join(" ");
+  return [s1, s2].join(" ");
 }
 
 function regeneratePreviewText() {
@@ -535,10 +533,8 @@ function regeneratePreviewText() {
   } else {
     const s1 = pickSentence(0);
     const s2 = pickSentence(0);
-    const s3 = pickSentence(0);
-    const s4 = pickSentence(0);
     firstSentenceLength = s1.length;
-    newText = [s1, s2, s3, s4].join(" ");
+    newText = [s1, s2].join(" ");
   }
 
   targetWords = newText.split(/\s+/);
@@ -653,12 +649,6 @@ function appendAdaptiveSentences(count) {
 }
 
 function ensureTargetLength(minLength) {
-  if (!calibrationComplete) {
-    if (targetText.length < getActiveTypingInput().value.length + 5) {
-      appendAdaptiveSentences(1);
-    }
-    return;
-  }
   while (targetText.length < minLength) {
     appendAdaptiveSentences(1);
   }
@@ -2204,13 +2194,7 @@ function clearVideoGlitch(hudElement) {
 }
 
 function charsMatch(typedChar, targetChar) {
-  if (currentTest === "normal" || currentTest === "leaderboard") {
-    // Normal and Leaderboard tests are case-sensitive!
-    return typedChar === targetChar;
-  } else {
-    // Vault and Dossier are case-insensitive
-    return typedChar.toLowerCase() === targetChar.toLowerCase();
-  }
+  return typedChar === targetChar;
 }
 
 function canAcceptTyping() {

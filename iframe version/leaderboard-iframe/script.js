@@ -653,12 +653,6 @@ function appendAdaptiveSentences(count) {
 }
 
 function ensureTargetLength(minLength) {
-  if (!calibrationComplete) {
-    if (targetText.length < getActiveTypingInput().value.length + 5) {
-      appendAdaptiveSentences(1);
-    }
-    return;
-  }
   while (targetText.length < minLength) {
     appendAdaptiveSentences(1);
   }
@@ -2204,13 +2198,7 @@ function clearVideoGlitch(hudElement) {
 }
 
 function charsMatch(typedChar, targetChar) {
-  if (currentTest === "normal" || currentTest === "leaderboard") {
-    // Normal and Leaderboard tests are case-sensitive!
-    return typedChar === targetChar;
-  } else {
-    // Vault and Dossier are case-insensitive
-    return typedChar.toLowerCase() === targetChar.toLowerCase();
-  }
+  return typedChar === targetChar;
 }
 
 function canAcceptTyping() {
