@@ -5862,3 +5862,18 @@ body.theme-normal .vault-stats.leaderboard-stats-row .vault-stat:last-child {
 .vault-games-footer {
   display: none !important;
 }
+
+/* Hide on mobile devices in iframe mode */
+@media (max-width: 768px) {
+  body.iframe-mode {
+    display: none !important;
+  }
+}
+
+/* Transparent background in iframe mode */
+html,
+body.iframe-mode,
+body.iframe-mode main,
+body.iframe-mode .test-section {
+  background: transparent !important;
+}

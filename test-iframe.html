@@ -353,12 +353,20 @@
         <p>Kopieer deze code naar je WordPress Custom HTML blok. Pas de <code>src</code> link aan naar jouw online pad:</p>
         <div class="code-box-wrapper">
           <button class="copy-btn" onclick="copyCode()">Kopieer Code</button>
-          <div class="code-box" id="htmlCode">&lt;iframe 
+          <div class="code-box" id="htmlCode">&lt;style&gt;
+  @media (max-width: 768px) {
+    #typetest-iframe {
+      display: none !important;
+    }
+  }
+&lt;/style&gt;
+
+&lt;iframe 
   id="typetest-iframe" 
   src="./iframe version/kluis-iframe/index.html" 
   width="100%" 
   height="700px" 
-  style="border: none; overflow: hidden; display: block;" 
+  style="border: none; overflow: hidden; display: block; background: transparent;" 
   allowfullscreen&gt;
 &lt;/iframe&gt;
 
@@ -445,12 +453,20 @@
       // Update code box HTML display
       const folder = variantConfig[variant].folder;
       const htmlCodeEl = document.getElementById('htmlCode');
-      htmlCodeEl.innerHTML = `&lt;iframe 
+      htmlCodeEl.innerHTML = `&lt;style&gt;
+  @media (max-width: 768px) {
+    #typetest-iframe {
+      display: none !important;
+    }
+  }
+&lt;/style&gt;
+
+&lt;iframe 
   id="typetest-iframe" 
   src="./iframe version/${folder}/index.html" 
   width="100%" 
   height="700px" 
-  style="border: none; overflow: hidden; display: block;" 
+  style="border: none; overflow: hidden; display: block; background: transparent;" 
   allowfullscreen&gt;
 &lt;/iframe&gt;
 
@@ -489,7 +505,7 @@
 
     function copyCode() {
       const folder = variantConfig[currentVariant].folder;
-      const codeText = `<iframe \n  id="typetest-iframe" \n  src="https://jouwwebsite.nl/typetests/${folder}/" \n  width="100%" \n  height="700px" \n  style="border: none; overflow: hidden; display: block;" \n  allowfullscreen>\n</iframe>\n\n<script>\n  window.addEventListener('message', function(event) {\n    if (event.data && event.data.type === 'resize-iframe') {\n      const iframe = document.getElementById('typetest-iframe');\n      if (iframe) {\n        const nextHeight = event.data.height + 'px';\n        if (iframe.style.height !== nextHeight) {\n          iframe.style.height = nextHeight;\n        }\n      }\n    }\n  });\n<\/script>`;
+      const codeText = `<style>\n  @media (max-width: 768px) {\n    #typetest-iframe {\n      display: none !important;\n    }\n  }\n</style>\n\n<iframe \n  id="typetest-iframe" \n  src="https://jouwwebsite.nl/typetests/${folder}/" \n  width="100%" \n  height="700px" \n  style="border: none; overflow: hidden; display: block; background: transparent;" \n  allowfullscreen>\n</iframe>\n\n<script>\n  window.addEventListener('message', function(event) {\n    if (event.data && event.data.type === 'resize-iframe') {\n      const iframe = document.getElementById('typetest-iframe');\n      if (iframe) {\n        const nextHeight = event.data.height + 'px';\n        if (iframe.style.height !== nextHeight) {\n          iframe.style.height = nextHeight;\n        }\n      }\n    }\n  });\n<\/script>`;
       navigator.clipboard.writeText(codeText).then(() => {
         const copyBtn = document.querySelector('.copy-btn');
         copyBtn.textContent = 'Gekopieerd!';
